@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HexaSort Party v2</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f0f1a;--panel:#1a1a2e;--panel2:#16213e;--accent:#e94560;--text:#e8e8e8;--dim:#888;
+--red:#ef4444;--blue:#3b82f6;--green:#22c55e;--yellow:#eab308;--purple:#a855f7;--orange:#f97316}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.screen{display:none;min-height:100vh;padding:16px}.screen.active{display:flex;flex-direction:column;align-items:center}
+
+/* MENU */
+#menu{justify-content:center;text-align:center}
+#menu h1{font-size:2.6em;margin-bottom:4px;background:linear-gradient(135deg,#ef4444,#3b82f6,#22c55e,#eab308,#a855f7,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+#menu .sub{color:var(--dim);margin-bottom:20px;font-size:.95em}
+.ms{background:var(--panel);border-radius:16px;padding:16px;margin:8px 0;max-width:500px;width:100%}
+.ms h3{color:var(--accent);margin-bottom:10px;font-size:.95em}
+.pr{display:flex;align-items:center;gap:6px;margin:5px 0;padding:7px;background:rgba(255,255,255,.04);border-radius:8px}
+.pr label{min-width:40px;font-weight:700;font-size:.9em}
+.pr input[type=text]{flex:1;padding:5px 8px;border-radius:6px;border:1px solid #333;background:#0d1b2a;color:#fff;min-width:0;font-size:.9em}
+.pr select{padding:5px;border-radius:6px;border:1px solid #333;background:#0d1b2a;color:#fff;font-size:.85em}
+.btn{padding:10px 28px;border:none;border-radius:10px;font-size:1em;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-p{background:linear-gradient(135deg,var(--accent),#d93a7a);color:#fff}
+.btn-p:hover{transform:scale(1.05);box-shadow:0 4px 20px rgba(233,69,96,.4)}
+.btn-s{background:#333;color:#fff}.btn-s:hover{background:#444}
+.btn-sm{padding:6px 14px;font-size:.8em}
+.bg{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;justify-content:center}
+.cbtn{width:42px;height:42px;border-radius:50%;border:2px solid #444;background:transparent;color:#fff;font-size:1.1em;cursor:pointer;transition:all .2s}
+.cbtn.on{border-color:var(--accent);background:var(--accent)}
+.pcb{display:flex;gap:6px;justify-content:center;margin:8px 0;flex-wrap:wrap}
+.pcb label{font-size:.85em;color:var(--dim);cursor:pointer;padding:4px 10px;border-radius:8px;border:2px solid #333;transition:all .2s}
+.pcb label:has(input:checked){border-color:var(--accent);background:rgba(233,69,96,.15)}
+.pcb input{display:none}
+
+/* GAME LAYOUT */
+#game{padding:8px;width:100%}
+.g-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;padding:0 4px;margin-bottom:6px}
+.round-badge{background:var(--panel2);padding:6px 14px;border-radius:12px;font-weight:700;font-size:1em}
+.turn-info{font-size:.85em;color:var(--dim)}
+.player-bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:6px 0}
+.pb-chip{padding:4px 12px;border-radius:10px;font-size:.8em;font-weight:700;border:2px solid transparent;transition:all .3s;opacity:.5}
+.pb-chip.current{opacity:1;transform:scale(1.1);box-shadow:0 0 12px rgba(255,255,255,.15)}
+.pb-chip .pb-pts{margin-left:4px;font-size:.9em}
+
+/* HEX BOARD */
+.board-wrap{display:flex;justify-content:center;margin:10px 0;position:relative}
+.hex-board{position:relative;width:340px;height:360px}
+.hex-row{display:flex;justify-content:center;gap:4px;margin-bottom:-12px}
+.hex-cell{width:60px;height:52px;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;position:relative;
+background:#222;border:2px solid #333;font-weight:700;font-size:.75em;color:#fff;user-select:none}
+.hex-cell:hover:not(.locked){transform:scale(1.12);z-index:2;border-color:var(--accent);filter:brightness(1.3)}
+.hex-cell.locked{cursor:default}
+.hex-cell.empty{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1)}
+.hex-cell .stack-vis{display:flex;flex-direction:column-reverse;gap:1px;align-items:center;pointer-events:none}
+.hex-cell .stack-layer{width:16px;height:5px;border-radius:2px;transition:all .3s}
+.hex-cell .stack-top{width:24px;height:10px;border-radius:3px;box-shadow:0 0 6px rgba(255,255,255,.3)}
+.hex-cell .hex-count{position:absolute;bottom:2px;font-size:.6em;font-weight:700;text-shadow:0 1px 2px #000}
+.hex-cell.clearing{animation:clearPop .5s ease-out}
+@keyframes clearPop{0%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.7}100%{transform:scale(0);opacity:0}}
+.hex-cell.merging{animation:mergeGlow .4s ease-in-out}
+@keyframes mergeGlow{0%{filter:brightness(1)}50%{filter:brightness(2) drop-shadow(0 0 8px #fff)}100%{filter:brightness(1)}}
+.hex-cell.valid-target{box-shadow:0 0 12px rgba(233,69,96,.6);border-color:var(--accent)}
+
+/* POOL */
+.pool-wrap{display:flex;justify-content:center;gap:12px;margin:10px 0;flex-wrap:wrap}
+.pool-stack{background:var(--panel);border-radius:12px;padding:10px 14px;cursor:pointer;transition:all .2s;
+border:2px solid #333;min-width:60px;text-align:center}
+.pool-stack:hover{border-color:var(--accent);transform:translateY(-3px)}
+.pool-stack.selected{border-color:var(--accent);box-shadow:0 0 16px rgba(233,69,96,.4);transform:scale(1.08)}
+.pool-stack.used{opacity:.2;pointer-events:none}
+.pool-stack .ps-hex{display:flex;flex-direction:column-reverse;gap:2px;align-items:center;margin:4px 0}
+.pool-stack .ps-layer{width:22px;height:8px;border-radius:3px}
+.pool-stack .ps-label{font-size:.7em;color:var(--dim);margin-top:2px}
+
+/* SCORE POPUP */
+.score-pop{position:fixed;pointer-events:none;font-size:1.8em;font-weight:900;z-index:100;
+text-shadow:0 2px 8px rgba(0,0,0,.8);animation:popUp 1s ease-out forwards}
+@keyframes popUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(1.5)}}
+
+/* SIDE PANELS */
+.side-panels{display:flex;flex-direction:column;gap:6px;margin-top:8px;width:100%;max-width:600px}
+.sp{background:var(--panel);border-radius:10px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;font-size:.85em}
+.sp-name{font-weight:700}.sp-score{color:var(--accent);font-weight:700}
+
+/* EVENT OVERLAY */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center;padding:20px}
+.overlay.show{display:flex}
+.overlay-card{background:var(--panel);border-radius:20px;padding:24px;max-width:400px;width:100%;text-align:center;border:2px solid var(--accent)}
+
+/* RULES */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-bg.show{display:flex}
+.modal{background:var(--panel);border-radius:16px;padding:20px;max-width:520px;width:100%;max-height:80vh;overflow-y:auto}
+.modal h2{color:var(--accent);margin-bottom:10px;font-size:1.1em}
+.modal p,.modal li{line-height:1.5;font-size:.88em}
+.modal ul{padding-left:18px;margin:6px 0}
+
+/* TUTORIAL */
+.tut-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none;pointer-events:none}
+.tut-bg.show{display:block;pointer-events:auto}
+.tut-box{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--panel);border:2px solid var(--accent);
+border-radius:14px;padding:14px 20px;max-width:460px;width:calc(100% - 32px);z-index:51;display:none}
+.tut-box.show{display:block}
+.tut-box p{margin-bottom:8px;line-height:1.4;font-size:.9em}
+
+/* MSG */
+.msg{background:rgba(233,69,96,.12);border:1px solid var(--accent);border-radius:10px;padding:8px 16px;text-align:center;font-weight:600;font-size:.9em;margin-top:8px;max-width:600px;width:100%}
+
+/* END */
+#end{text-align:center;padding-top:30px}
+#end h1{font-size:2.4em;margin-bottom:8px;background:linear-gradient(135deg,#ef4444,#3b82f6,#22c55e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.end-rank{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--panel);border-radius:12px;margin:6px 0;max-width:450px}
+.end-rank.w{border:2px solid #f5a623}
+.er-pos{font-size:1.5em;width:36px}
+.er-name{flex:1;text-align:left;font-weight:600}
+.er-score{font-weight:700;color:var(--accent)}
+</style>
+</head>
+<body>
+
+<!-- MENU -->
+<div id="menu" class="screen active">
+  <h1>⬡ HexaSort Party v2</h1>
+  <p class="sub">Tablero compartido · Merge en cadena · 2-4 jugadores</p>
+  <div class="ms">
+    <h3>Jugadores</h3>
+    <div class="pcb" id="pcBtns">
+      <button class="cbtn on" onclick="setPC(2)">2</button>
+      <button class="cbtn" onclick="setPC(3)">3</button>
+      <button class="cbtn" onclick="setPC(4)">4</button>
+    </div>
+    <div id="pSetup"></div>
+  </div>
+  <div class="ms">
+    <h3>Rondas</h3>
+    <div class="pcb">
+      <label><input type="radio" name="rnd" value="5"> Corta (5)</label>
+      <label><input type="radio" name="rnd" value="10" checked> Normal (10)</label>
+      <label><input type="radio" name="rnd" value="15"> Larga (15)</label>
+    </div>
+  </div>
+  <div class="bg">
+    <button class="btn btn-p" onclick="startG()">🎲 Jugar</button>
+    <button class="btn btn-s" onclick="startTut()">📖 Tutorial</button>
+    <button class="btn btn-s" onclick="showRules()">📜 Reglas</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+  <div class="g-top">
+    <div class="round-badge" id="roundBadge">Ronda 1</div>
+    <div class="turn-info" id="turnInfo"></div>
+    <button class="btn btn-s btn-sm" onclick="showRules()">📜</button>
+  </div>
+  <div class="player-bar" id="playerBar"></div>
+  <div class="board-wrap">
+    <div class="hex-board" id="hexBoard"></div>
+  </div>
+  <div class="pool-wrap" id="poolWrap"></div>
+  <div class="msg" id="msg">Preparando...</div>
+  <div class="side-panels" id="sidePanels"></div>
+</div>
+
+<!-- END -->
+<div id="end" class="screen">
+  <h1>🏆 ¡Fin del Juego!</h1>
+  <div id="endRank"></div>
+  <div class="bg">
+    <button class="btn btn-p" onclick="showS('menu')">🏠 Menú</button>
+    <button class="btn btn-s" onclick="startG()">🔄 Revancha</button>
+  </div>
+</div>
+
+<!-- RULES -->
+<div class="modal-bg" id="rulesM">
+  <div class="modal">
+    <h2>📜 Reglas — HexaSort Party v2</h2>
+    <p><strong>Objetivo:</strong> Acumula el mayor puntaje colocando pilas de hexágonos en el tablero compartido.</p>
+    <p><strong>Tablero:</strong> 19 hexágonos compartidos por todos los jugadores.</p>
+    <p><strong>Pool:</strong> 3 pilas de colores aleatorios (1-7 hexágonos cada una). Al colocar las 3, salen 3 nuevas.</p>
+    <p><strong>Turnos:</strong> Los jugadores se turnan para colocar UNA pila del pool. El orden de selección rota cada ronda.</p>
+    <p><strong>Merge (fusión):</strong></p>
+    <ul>
+      <li>Colocas una pila en una celda vacía.</li>
+      <li>Si tiene vecinos adyacentes del mismo color → los hexágonos de ese color se mueven a tu pila.</li>
+      <li>Si el merge crea nuevos adyacentes del mismo color → ¡encadena! (cascade)</li>
+      <li>Se prioriza el camino que acumule más hexágonos.</li>
+    </ul>
+    <p><strong>Desaparición:</strong> Cuando una pila acumula ≥10 hexágonos del mismo color → desaparecen. Cada hexágono = +1 punto.</p>
+    <p><strong>Penalización:</strong> Si no hay dónde colocar → TODOS pierden 5 puntos, tablero se reinicia.</p>
+    <p><strong>Victoria:</strong> Mayor puntaje tras las rondas configuradas. Desempate: menos hexágonos en tablero.</p>
+    <button class="btn btn-p" onclick="hideRules()">Entendido</button>
+  </div>
+</div>
+
+<!-- TUTORIAL -->
+<div class="tut-bg" id="tutBg"></div>
+<div class="tut-box" id="tutBox"><p id="tutTx"></p><button class="btn btn-p btn-sm" id="tutBtn" onclick="tutNext()">Siguiente</button></div>
+
+<script>
+// ===================== CONSTANTS =====================
+const COLORS = {
+  red:{c:'#ef4444',n:'Rojo'}, blue:{c:'#3b82f6',n:'Azul'}, green:{c:'#22c55e',n:'Verde'},
+  yellow:{c:'#eab308',n:'Amarillo'}, purple:{c:'#a855f7',n:'Morado'}, orange:{c:'#f97316',n:'Naranja'}
+};
+const COLOR_KEYS = Object.keys(COLORS);
+const PCOL = ['#ec4899','#6366f1','#10b981','#f59e0b'];
+
+// 19-hex honeycomb layout: 3-4-5-4-3
+const ROWS = [[0,1,2],[3,4,5,6],[7,8,9,10,11],[12,13,14,15],[16,17,18]];
+// Adjacency for staggered hex grid
+const ADJ = [
+  [1,3],          // 0
+  [0,2,4],        // 1
+  [1,5],          // 2
+  [0,4,7,8],      // 3
+  [1,3,5,8,9],    // 4
+  [2,4,6,9,10],   // 5
+  [5,10,11],      // 6
+  [3,8,12],       // 7
+  [3,4,7,9,12,13],// 8
+  [4,5,8,10,13,14],// 9
+  [5,6,9,11,14,15],// 10
+  [6,10,15],      // 11
+  [7,8,13,16],    // 12
+  [8,9,12,14,16,17],// 13
+  [9,10,13,15,17,18],// 14
+  [10,11,14,18],  // 15
+  [12,13,17],     // 16
+  [13,14,16,18],  // 17
+  [14,15,17]      // 18
+];
+
+const THRESHOLD = 10;
+
+// ===================== GAME STATE =====================
+let G = {
+  players:[], round:0, maxRounds:10, curP:0, phase:'idle',
+  board:[], pool:[], poolUsed:[], selectedPool:-1,
+  rotationOffset:0, over:false, animating:false
+};
+
+// ===================== SETUP =====================
+function setPC(n){
+  document.querySelectorAll('#pcBtns .cbtn').forEach((b,i)=>b.classList.toggle('on',i===n-2));
+  renderPS(n);
+}
+function renderPS(n){
+  let h='';
+  for(let i=0;i<n;i++)
+    h+=`<div class="pr"><label style="color:${PCOL[i]}">P${i+1}</label>
+    <input type="text" id="pn${i}" placeholder="Jugador ${i+1}" maxlength="10">
+    <select id="pt${i}"><option value="human">Humano</option><option value="easy">IA Fácil</option>
+    <option value="medium">IA Media</option><option value="hard">IA Difícil</option></select></div>`;
+  document.getElementById('pSetup').innerHTML=h;
+}
+function getPC(){const a=document.querySelector('#pcBtns .cbtn.on');return a?parseInt(a.textContent):2}
+function getDur(){return parseInt(document.querySelector('input[name=rnd]:checked')?.value||10)}
+
+// ===================== START =====================
+function startG(tut=false){
+  const n=getPC();
+  G.players=[];G.over=false;G.animating=false;
+  for(let i=0;i<n;i++){
+    const nm=document.getElementById(`pn${i}`)?.value.trim()||`Jugador ${i+1}`;
+    const tp=document.getElementById(`pt${i}`)?.value||'human';
+    G.players.push({name:nm,type:tp,color:PCOL[i],score:0});
+  }
+  G.maxRounds=tut?3:getDur();
+  G.round=0;G.rotationOffset=0;
+  resetBoard();
+  G.pool=[];G.poolUsed=[];G.selectedPool=-1;
+  nextRound();
+  showS('game');
+}
+
+function resetBoard(){
+  G.board=[];
+  for(let i=0;i<19;i++) G.board.push({stack:[]}); // stack = array of color strings
+}
+
+// ===================== POOL =====================
+function generatePool(){
+  G.pool=[];G.poolUsed=[];
+  for(let i=0;i<3;i++){
+    const color=COLOR_KEYS[Math.floor(Math.random()*COLOR_KEYS.length)];
+    const height=Math.floor(Math.random()*7)+1; // 1-7
+    G.pool.push({color,height});
+    G.poolUsed.push(false);
+  }
+  G.selectedPool=-1;
+}
+
+// ===================== ROUND / TURNS =====================
+function nextRound(){
+  G.round++;
+  if(G.round>G.maxRounds){endGame();return}
+  generatePool();
+  // Rotation: round 1 → offset 0, round 2 → offset 1, etc.
+  G.rotationOffset=(G.round-1)%G.players.length;
+  G.curP=0; // index into rotated order
+  startTurn();
+}
+
+function getCurrentPlayerIdx(){
+  return (G.rotationOffset+G.curP)%G.players.length;
+}
+
+function startTurn(){
+  G.phase='turn';
+  G.selectedPool=-1;
+  const pi=getCurrentPlayerIdx();
+  const p=G.players[pi];
+
+  // Check if any pool stacks available
+  const avail=poolAvailable();
+  if(!avail){
+    // All 3 used → new pool
+    generatePool();
+  }
+
+  // Check if player can place anything
+  if(!canPlaceAny()){
+    // Board lock!
+    boardLockPenalty();
+    return;
+  }
+
+  renderAll();
+  setMsg(`🎯 ${p.name}: selecciona una pila del pool y colócala`);
+  if(p.type!=='human') setTimeout(aiTurn,600);
+}
+
+function poolAvailable(){
+  return G.poolUsed.some(u=>!u);
+}
+
+function canPlaceAny(){
+  const emptyCells=G.board.filter(c=>c.stack.length===0).length;
+  if(emptyCells===0) return false;
+  return G.poolUsed.some((u,i)=>!u);
+}
+
+// ===================== PLACEMENT =====================
+function selectPool(idx){
+  if(G.animating)return;
+  const pi=getCurrentPlayerIdx();
+  if(G.players[pi].type!=='human')return;
+  if(G.poolUsed[idx])return;
+  G.selectedPool=idx;
+  renderPool();
+  renderBoard();
+  // Highlight valid targets
+  document.querySelectorAll('.hex-cell.empty').forEach(el=>el.classList.add('valid-target'));
+}
+
+function clickCell(ci){
+  if(G.animating)return;
+  const pi=getCurrentPlayerIdx();
+  if(G.players[pi].type!=='human')return;
+  if(G.selectedPool<0||G.poolUsed[G.selectedPool])return;
+  if(G.board[ci].stack.length>0)return; // not empty
+  placeStack(ci,G.selectedPool);
+}
+
+async function placeStack(cellIdx,poolIdx){
+  G.animating=true;
+  const stack=G.pool[poolIdx];
+  const color=stack.color;
+  const height=stack.height;
+
+  // Place the stack
+  for(let i=0;i<height;i++) G.board[cellIdx].stack.push(color);
+  G.poolUsed[poolIdx]=true;
+  G.selectedPool=-1;
+
+  renderAll();
+  await sleep(300);
+
+  // Merge chain
+  const pi=getCurrentPlayerIdx();
+  let totalCleared=0;
+  let merged=true;
+  while(merged){
+    merged=false;
+    // Find all cells adjacent to cellIdx with same top color
+    const topColor=getTopColor(cellIdx);
+    if(!topColor)break;
+
+    const neighbors=ADJ[cellIdx];
+    let mergeHappened=false;
+    for(const ni of neighbors){
+      const nTop=getTopColor(ni);
+      if(nTop===topColor&&G.board[ni].stack.length>0){
+        // Move all hexagons of that color from neighbor to cellIdx
+        const toMove=[];
+        const remaining=[];
+        for(const h of G.board[ni].stack){
+          if(h===color) toMove.push(h);
+          else remaining.push(h);
+        }
+        if(toMove.length>0){
+          G.board[ni].stack=remaining;
+          for(const h of toMove) G.board[cellIdx].stack.push(h);
+          mergeHappened=true;
+          merged=true;
+
+          // Visual feedback
+          highlightCell(cellIdx,'merging');
+          await sleep(250);
+          renderAll();
+        }
+      }
+    }
+
+    // After merges, check cascade: cellIdx might now be adjacent to new same-color tops
+    // The while loop handles this
+
+    // Check clear
+    const topC=getTopColor(cellIdx);
+    if(topC){
+      const topCount=countTopColor(cellIdx);
+      if(topCount>=THRESHOLD){
+        // Clear!
+        const cleared=removeTopColor(cellIdx);
+        totalCleared+=cleared;
+        G.players[pi].score+=cleared;
+        highlightCell(cellIdx,'clearing');
+        showScorePop(cellIdx,cleared);
+        await sleep(500);
+        renderAll();
+      }
+    }
+  }
+
+  // Now check all cells for any remaining clears (from cascades that affected other cells)
+  // Actually, the merge only moves TO cellIdx, so only cellIdx can clear
+  // But we need to handle the case where after clearing cellIdx, other cells might now be
+  // adjacent to each other with same color and should merge.
+  // For simplicity in v2, only the placed cell triggers merges.
+
+  G.animating=false;
+
+  // Advance to next player
+  G.curP++;
+  if(G.curP>=G.players.length){
+    // All players done this round
+    nextRound();
+  }else{
+    // Check if pool is empty
+    if(!poolAvailable()){
+      generatePool();
+    }
+    startTurn();
+  }
+}
+
+function getTopColor(cellIdx){
+  const s=G.board[cellIdx].stack;
+  return s.length>0?s[s.length-1]:null;
+}
+
+function countTopColor(cellIdx){
+  const s=G.board[cellIdx].stack;
+  if(s.length===0)return 0;
+  const top=s[s.length-1];
+  let count=0;
+  for(let i=s.length-1;i>=0;i--){
+    if(s[i]===top)count++;
+    else break;
+  }
+  return count;
+}
+
+function removeTopColor(cellIdx){
+  const s=G.board[cellIdx].stack;
+  if(s.length===0)return 0;
+  const top=s[s.length-1];
+  let removed=0;
+  while(s.length>0&&s[s.length-1]===top){s.pop();removed++}
+  return removed;
+}
+
+function highlightCell(cellIdx,cls){
+  const el=document.querySelector(`.hex-cell[data-ci="${cellIdx}"]`);
+  if(el){el.classList.add(cls);setTimeout(()=>el.classList.remove(cls),500)}
+}
+
+function showScorePop(cellIdx,pts){
+  const el=document.querySelector(`.hex-cell[data-ci="${cellIdx}"]`);
+  if(!el)return;
+  const r=el.getBoundingClientRect();
+  const pop=document.createElement('div');
+  pop.className='score-pop';
+  pop.textContent=`+${pts}`;
+  pop.style.left=r.left+r.width/2-20+'px';
+  pop.style.top=r.top-10+'px';
+  pop.style.color='var(--accent)';
+  document.body.appendChild(pop);
+  setTimeout(()=>pop.remove(),1000);
+}
+
+// ===================== BOARD LOCK =====================
+function boardLockPenalty(){
+  G.players.forEach(p=>p.score=Math.max(0,p.score-5));
+  resetBoard();
+  renderAll();
+  setMsg('🚫 ¡Tablero cerrado! Todos pierden 5 puntos. Tablero reiniciado.');
+  setTimeout(()=>{
+    generatePool();
+    startTurn();
+  },2000);
+}
+
+// ===================== AI =====================
+function aiTurn(){
+  const pi=getCurrentPlayerIdx();
+  const p=G.players[pi];
+  const emptyCells=[];
+  G.board.forEach((c,i)=>{if(c.stack.length===0)emptyCells.push(i)});
+
+  // Pick best pool stack
+  let bestScore=-Infinity,bestPool=-1,bestCell=-1;
+
+  for(let pi2=0;pi2<3;pi2++){
+    if(G.poolUsed[pi2])continue;
+    const stack=G.pool[pi2];
+    for(const ci of emptyCells){
+      const sc=evalPlacement(ci,stack,p.type);
+      if(sc>bestScore){bestScore=sc;bestPool=pi2;bestCell=ci}
+    }
+  }
+
+  if(bestPool<0){
+    // Random
+    const avail=[];for(let i=0;i<3;i++)if(!G.poolUsed[i])avail.push(i);
+    if(avail.length===0){G.curP++;if(G.curP>=G.players.length)nextRound();else startTurn();return}
+    bestPool=avail[Math.floor(Math.random()*avail.length)];
+    bestCell=emptyCells[Math.floor(Math.random()*emptyCells.length)];
+  }
+
+  placeStack(bestCell,bestPool);
+}
+
+function evalPlacement(cellIdx,stack,aiType){
+  const color=stack.color;
+  const height=stack.height;
+
+  if(aiType==='easy'){
+    return Math.random()*10;
+  }
+
+  // Count adjacent same-color
+  let adjSame=0;
+  for(const ni of ADJ[cellIdx]){
+    if(getTopColor(ni)===color)adjSame++;
+  }
+
+  if(aiType==='medium'){
+    return adjSame*5+height;
+  }
+
+  // Hard: simulate merge chain
+  let simTotal=height;
+  const visited=new Set([cellIdx]);
+  const queue=[];
+  for(const ni of ADJ[cellIdx]){
+    if(getTopColor(ni)===color)queue.push(ni);
+  }
+  while(queue.length>0){
+    const ci=queue.shift();
+    if(visited.has(ci))continue;
+    visited.add(ci);
+    const nTop=getTopColor(ci);
+    if(nTop===color){
+      // Count how many of that color in the stack
+      const s=G.board[ci].stack;
+      let cnt=0;
+      for(let i=s.length-1;i>=0;i--){if(s[i]===color)cnt++;else break}
+      simTotal+=cnt;
+      for(const ni of ADJ[ci]){
+        if(!visited.has(ni)&&getTopColor(ni)===color)queue.push(ni);
+      }
+    }
+  }
+
+  let score=simTotal*3;
+  if(simTotal>=THRESHOLD)score+=50; // bonus for clearing
+  return score;
+}
+
+// ===================== END GAME =====================
+function endGame(){
+  G.over=true;
+  showS('end');
+  const sorted=[...G.players].sort((a,b)=>{
+    if(b.score!==a.score)return b.score-a.score;
+    // Tiebreak: fewer hexagons on board
+    const aHex=G.board.reduce((s,c)=>s+c.stack.length,0);
+    return 0; // same board
+  });
+  const medals=['🥇','🥈','🥉','4️⃣'];
+  document.getElementById('endRank').innerHTML=sorted.map((p,i)=>{
+    const origIdx=G.players.indexOf(p);
+    return`<div class="end-rank ${i===0?'w':''}">
+    <span class="er-pos">${medals[i]}</span>
+    <span class="er-name" style="color:${p.color}">${p.name}</span>
+    <span class="er-score">${p.score} pts</span></div>`;
+  }).join('');
+}
+
+// ===================== RENDER =====================
+function renderAll(){
+  renderBoard();
+  renderPool();
+  renderPlayerBar();
+  renderPanels();
+  document.getElementById('roundBadge').textContent=`Ronda ${G.round}/${G.maxRounds}`;
+  const pi=getCurrentPlayerIdx();
+  const rotOrder=G.players.map((_,i)=>{
+    const idx=(G.rotationOffset+i)%G.players.length;
+    return G.players[idx].name;
+  }).join(' → ');
+  document.getElementById('turnInfo').textContent=`Orden: ${rotOrder}`;
+}
+
+function renderBoard(){
+  const board=document.getElementById('hexBoard');
+  let html='';
+  let ci=0;
+  for(let ri=0;ri<ROWS.length;ri++){
+    html+='<div class="hex-row">';
+    for(let hi=0;hi<ROWS[ri].length;hi++){
+      const cell=G.board[ci];
+      const isEmpty=cell.stack.length===0;
+      const topColor=isEmpty?null:getTopColor(ci);
+      const topCount=isEmpty?0:countTopColor(ci);
+      const borderColor=topColor?COLORS[topColor].c:'#333';
+      const bg=isEmpty?'':COLORS[topColor].c;
+
+      html+=`<div class="hex-cell ${isEmpty?'empty':'locked'}" data-ci="${ci}"
+        style="${!isEmpty?'background:'+bg+';border-color:'+borderColor:''}"
+        onclick="clickCell(${ci})">`;
+      if(!isEmpty){
+        html+=`<div class="stack-vis">`;
+        // Show up to 3 bottom layers + top
+        const s=cell.stack;
+        const showLayers=s.length>4?[s[0],s[1],'...',s[s.length-1]]:s;
+        for(let li=0;li<showLayers.length-1;li++){
+          if(showLayers[li]==='...'){
+            html+=`<div class="stack-layer" style="background:#555;width:12px;height:3px"></div>`;
+          }else{
+            html+=`<div class="stack-layer" style="background:${COLORS[showLayers[li]].c}"></div>`;
+          }
+        }
+        html+=`</div>`;
+        html+=`<span class="hex-count">${cell.stack.length}</span>`;
+      }
+      html+=`</div>`;
+      ci++;
+    }
+    html+='</div>';
+  }
+  board.innerHTML=html;
+}
+
+function renderPool(){
+  const wrap=document.getElementById('poolWrap');
+  let html='';
+  for(let i=0;i<3;i++){
+    const s=G.pool[i];
+    if(!s)continue;
+    const used=G.poolUsed[i];
+    const sel=G.selectedPool===i;
+    html+=`<div class="pool-stack ${used?'used':''} ${sel?'selected':''}"
+      onclick="selectPool(${i})" ${used?'':''}>
+      <div class="ps-hex">`;
+    for(let j=0;j<Math.min(s.height,7);j++){
+      html+=`<div class="ps-layer" style="background:${COLORS[s.color].c}"></div>`;
+    }
+    html+=`</div><div class="ps-label">${s.height} ${COLORS[s.color].n}${s.height>1?'s':''}</div></div>`;
+  }
+  wrap.innerHTML=html;
+}
+
+function renderPlayerBar(){
+  const bar=document.getElementById('playerBar');
+  const pi=getCurrentPlayerIdx();
+  bar.innerHTML=G.players.map((p,i)=>{
+    const isCur=i===pi&&!G.over;
+    return`<div class="pb-chip ${isCur?'current':''}" style="color:${p.color};border-color:${p.color};background:${isCur?p.color+'22':'transparent'}">
+    ${p.name} <span class="pb-pts">${p.score}pts</span></div>`;
+  }).join('');
+}
+
+function renderPanels(){
+  const pp=document.getElementById('sidePanels');
+  pp.innerHTML=G.players.map((p,i)=>{
+    return`<div class="sp"><span class="sp-name" style="color:${p.color}">${p.name}</span>
+    <span class="sp-score">${p.score} pts</span></div>`;
+  }).join('');
+}
+
+// ===================== TUTORIAL =====================
+let tutS=0;
+const TUT=[
+  {t:'¡Bienvenido a HexaSort Party v2! ⬡ Tablero compartido de 19 hexágonos.'},
+  {t:'Cada turno, el pool muestra 3 pilas de colores. Selecciona una y colócala en una celda vacía.'},
+  {t:'Cuando tu pila es adyacente a otra del mismo color → ¡MERGE! Los hexágonos se mueven a tu pila.'},
+  {t:'Si el merge crea nuevos adyacentes del mismo color → ¡CADENA! Se prioriza el camino con más hexágonos.'},
+  {t:'Cuando una pila llega a ≥10 hexágonos del mismo color → ¡DESAPARECE! +1 punto por hexágono.'},
+  {t:'Si no hay espacio para colocar → TODOS pierden 5 puntos y el tablero se reinicia.'},
+  {t:'El orden de selección rota cada ronda. ¡El que más puntos tenga al final gana!'},
+  {t:'¡Vamos a jugar! Selecciona una pila del pool.'}
+];
+function startTut(){
+  G.players=[
+    {name:'Tú',type:'human',color:PCOL[0],score:0},
+    {name:'IA Demo',type:'easy',color:PCOL[1],score:0}
+  ];
+  G.maxRounds=3;G.round=0;G.rotationOffset=0;G.over=false;G.animating=false;
+  resetBoard();generatePool();G.round=1;
+  showS('game');renderAll();tutS=0;showTut();
+}
+function showTut(){
+  const bg=document.getElementById('tutBg'),box=document.getElementById('tutBox'),
+    tx=document.getElementById('tutTx'),btn=document.getElementById('tutBtn');
+  if(tutS>=TUT.length){bg.classList.remove('show');box.classList.remove('show');return}
+  tx.textContent=TUT[tutS].t;
+  btn.textContent=tutS===TUT.length-1?'¡Jugar!':'Siguiente';
+  bg.classList.add('show');box.classList.add('show');
+}
+function tutNext(){tutS++;if(tutS>=TUT.length){document.getElementById('tutBg').classList.remove('show');document.getElementById('tutBox').classList.remove('show');startG()}else showTut()}
+
+// ===================== UI =====================
+function showS(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function setMsg(m){document.getElementById('msg').textContent=m}
+function showRules(){document.getElementById('rulesM').classList.add('show')}
+function hideRules(){document.getElementById('rulesM').classList.remove('show')}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+// ===================== INIT =====================
+renderPS(2);
+</script>
+</body>
+</html>
