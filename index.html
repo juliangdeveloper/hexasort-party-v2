@@ -287,9 +287,22 @@ function resetBoard(){
 function generatePool(){
   G.pool=[];G.poolUsed=[];
   for(let i=0;i<3;i++){
-    const color=COLOR_KEYS[Math.floor(Math.random()*COLOR_KEYS.length)];
-    const height=Math.floor(Math.random()*7)+1; // 1-7
-    G.pool.push({color,height});
+    const height=Math.floor(Math.random()*4)+2; // 2-5 layers
+    const layers=[];
+    // Guarantee mixed colors: pick from at least 2 different colors
+    const available=[...COLOR_KEYS];
+    // Shuffle available colors
+    for(let j=available.length-1;j>0;j--){const k=Math.floor(Math.random()*(j+1));[available[j],available[k]]=[available[k],available[j]]}
+    const numDistinct=Math.min(available.length, 2+Math.floor(Math.random()*3)); // 2-4 distinct colors
+    const poolColors=available.slice(0,numDistinct);
+    for(let j=0;j<height;j++){
+      layers.push(poolColors[Math.floor(Math.random()*poolColors.length)]);
+    }
+    // Ensure at least 2 different colors in the stack
+    if(new Set(layers).size<2&&height>=2){
+      layers[Math.floor(Math.random()*height)]=poolColors[1];
+    }
+    G.pool.push({layers,height});
     G.poolUsed.push(false);
   }
   G.selectedPool=-1;
@@ -370,88 +383,101 @@ function clickCell(ci){
 async function placeStack(cellIdx,poolIdx){
   G.animating=true;
   const stack=G.pool[poolIdx];
-  const color=stack.color;
+  const layers=stack.layers;
   const height=stack.height;
 
-  // Place the stack
-  for(let i=0;i<height;i++) G.board[cellIdx].stack.push(color);
+  // Place the stack — layers[0] = bottom, layers[height-1] = top
+  for(let i=0;i<height;i++) G.board[cellIdx].stack.push(layers[i]);
   G.poolUsed[poolIdx]=true;
   G.selectedPool=-1;
 
   renderAll();
   await sleep(300);
 
-  // Merge chain
+  // CASCADING MERGE: BFS from placed cell
   const pi=getCurrentPlayerIdx();
   let totalCleared=0;
+  let cascadeLevel=0;
   let merged=true;
+
   while(merged){
     merged=false;
-    // Find all cells adjacent to cellIdx with same top color
-    const topColor=getTopColor(cellIdx);
-    if(!topColor)break;
+    // Check each color present in the placed cell
+    const colorsInCell=new Set(G.board[cellIdx].stack);
 
-    const neighbors=ADJ[cellIdx];
-    let mergeHappened=false;
-    for(const ni of neighbors){
-      const nTop=getTopColor(ni);
-      if(nTop===topColor&&G.board[ni].stack.length>0){
-        // Move all hexagons of that color from neighbor to cellIdx
-        const toMove=[];
+    for(const color of colorsInCell){
+      // BFS to find ALL connected cells with this color on top
+      const visited=new Set([cellIdx]);
+      const group=[cellIdx];
+      const queue=[cellIdx];
+
+      while(queue.length>0){
+        const ci=queue.shift();
+        for(const ni of ADJ[ci]){
+          if(visited.has(ni))continue;
+          visited.add(ni);
+          if(getTopColor(ni)===color&&G.board[ni].stack.length>0){
+            group.push(ni);
+            queue.push(ni);
+          }
+        }
+      }
+
+      // Only merge if there are adjacent cells with this color (group > 1)
+      if(group.length<=1)continue;
+
+      // Merge: move all hexagons of this color from neighbors into cellIdx
+      let moved=false;
+      for(const gi of group){
+        if(gi===cellIdx)continue;
         const remaining=[];
-        for(const h of G.board[ni].stack){
-          if(h===color) toMove.push(h);
+        const toMove=[];
+        for(const h of G.board[gi].stack){
+          if(h===color)toMove.push(h);
           else remaining.push(h);
         }
         if(toMove.length>0){
-          G.board[ni].stack=remaining;
+          G.board[gi].stack=remaining;
           for(const h of toMove) G.board[cellIdx].stack.push(h);
-          mergeHappened=true;
-          merged=true;
-
-          // Visual feedback
-          highlightCell(cellIdx,'merging');
-          await sleep(250);
-          renderAll();
+          moved=true;
         }
+      }
+
+      if(moved){
+        merged=true;
+        cascadeLevel++;
+        highlightCell(cellIdx,'merging');
+        await sleep(300);
+        renderAll();
       }
     }
 
-    // After merges, check cascade: cellIdx might now be adjacent to new same-color tops
-    // The while loop handles this
-
-    // Check clear
+    // After merging, check if cellIdx reached threshold
+    // Check all colors that could form groups of THRESHOLD+
     const topC=getTopColor(cellIdx);
     if(topC){
       const topCount=countTopColor(cellIdx);
       if(topCount>=THRESHOLD){
-        // Clear!
         const cleared=removeTopColor(cellIdx);
         totalCleared+=cleared;
-        G.players[pi].score+=cleared;
+        const cascadeMultiplier=1+(cascadeLevel-1)*0.5;
+        const points=Math.round(cleared*cascadeMultiplier);
+        G.players[pi].score+=points;
         highlightCell(cellIdx,'clearing');
-        showScorePop(cellIdx,cleared);
+        showScorePop(cellIdx,points,cascadeLevel>1?` ×${cascadeMultiplier.toFixed(1)}`:'');
         await sleep(500);
         renderAll();
       }
     }
   }
 
-  // Now check all cells for any remaining clears (from cascades that affected other cells)
-  // Actually, the merge only moves TO cellIdx, so only cellIdx can clear
-  // But we need to handle the case where after clearing cellIdx, other cells might now be
-  // adjacent to each other with same color and should merge.
-  // For simplicity in v2, only the placed cell triggers merges.
-
   G.animating=false;
 
   // Advance to next player
   G.curP++;
   if(G.curP>=G.players.length){
-    // All players done this round
     nextRound();
   }else{
-    // Check if pool is empty
     if(!poolAvailable()){
       generatePool();
     }
@@ -490,13 +516,13 @@ function highlightCell(cellIdx,cls){
   if(el){el.classList.add(cls);setTimeout(()=>el.classList.remove(cls),500)}
 }
 
-function showScorePop(cellIdx,pts){
+function showScorePop(cellIdx,pts,extra=''){
   const el=document.querySelector(`.hex-cell[data-ci="${cellIdx}"]`);
   if(!el)return;
   const r=el.getBoundingClientRect();
   const pop=document.createElement('div');
   pop.className='score-pop';
-  pop.textContent=`+${pts}`;
+  pop.textContent=`+${pts}${extra}`;
   pop.style.left=r.left+r.width/2-20+'px';
   pop.style.top=r.top-10+'px';
   pop.style.color='var(--accent)';
@@ -547,43 +573,47 @@ function aiTurn(){
 }
 
 function evalPlacement(cellIdx,stack,aiType){
-  const color=stack.color;
+  const layers=stack.layers;
   const height=stack.height;
 
   if(aiType==='easy'){
     return Math.random()*10;
   }
 
-  // Count adjacent same-color
+  // Count adjacent same-color for each layer in the stack
   let adjSame=0;
-  for(const ni of ADJ[cellIdx]){
-    if(getTopColor(ni)===color)adjSame++;
+  for(const color of layers){
+    for(const ni of ADJ[cellIdx]){
+      if(getTopColor(ni)===color)adjSame++;
+    }
   }
 
   if(aiType==='medium'){
     return adjSame*5+height;
   }
 
-  // Hard: simulate merge chain
+  // Hard: simulate merge cascade for each unique color in the stack
   let simTotal=height;
-  const visited=new Set([cellIdx]);
-  const queue=[];
-  for(const ni of ADJ[cellIdx]){
-    if(getTopColor(ni)===color)queue.push(ni);
-  }
-  while(queue.length>0){
-    const ci=queue.shift();
-    if(visited.has(ci))continue;
-    visited.add(ci);
-    const nTop=getTopColor(ci);
-    if(nTop===color){
-      // Count how many of that color in the stack
-      const s=G.board[ci].stack;
-      let cnt=0;
-      for(let i=s.length-1;i>=0;i--){if(s[i]===color)cnt++;else break}
-      simTotal+=cnt;
-      for(const ni of ADJ[ci]){
-        if(!visited.has(ni)&&getTopColor(ni)===color)queue.push(ni);
+  const uniqueColors=new Set(layers);
+  for(const color of uniqueColors){
+    const visited=new Set([cellIdx]);
+    const queue=[];
+    for(const ni of ADJ[cellIdx]){
+      if(getTopColor(ni)===color)queue.push(ni);
+    }
+    while(queue.length>0){
+      const ci=queue.shift();
+      if(visited.has(ci))continue;
+      visited.add(ci);
+      const nTop=getTopColor(ci);
+      if(nTop===color){
+        const s=G.board[ci].stack;
+        let cnt=0;
+        for(let i=s.length-1;i>=0;i--){if(s[i]===color)cnt++;else break}
+        simTotal+=cnt;
+        for(const ni of ADJ[ci]){
+          if(!visited.has(ni)&&getTopColor(ni)===color)queue.push(ni);
+        }
       }
     }
   }
@@ -679,10 +709,13 @@ function renderPool(){
     html+=`<div class="pool-stack ${used?'used':''} ${sel?'selected':''}"
       onclick="selectPool(${i})" ${used?'':''}>
       <div class="ps-hex">`;
+    // Show mixed color layers (bottom to top)
     for(let j=0;j<Math.min(s.height,7);j++){
-      html+=`<div class="ps-layer" style="background:${COLORS[s.color].c}"></div>`;
+      html+=`<div class="ps-layer" style="background:${COLORS[s.layers[j]].c}"></div>`;
     }
-    html+=`</div><div class="ps-label">${s.height} ${COLORS[s.color].n}${s.height>1?'s':''}</div></div>`;
+    // Label: show unique colors
+    const uniqueColors=[...new Set(s.layers)].map(c=>COLORS[c].n).join('+');
+    html+=`</div><div class="ps-label">${s.height} · ${uniqueColors}</div></div>`;
   }
   wrap.innerHTML=html;
 }
