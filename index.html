@@ -24,7 +24,9 @@ background-size:200% 200%;animation:shimmer 3s ease-in-out infinite}
 .pr input[type=text]{flex:1;padding:5px 8px;border-radius:6px;border:1px solid #333;background:#0d1b2a;color:#fff;min-width:0;font-size:.9em}
 .pr select{padding:5px;border-radius:6px;border:1px solid #333;background:#0d1b2a;color:#fff;font-size:.85em}
 .btn{padding:10px 28px;border:none;border-radius:10px;font-size:1em;font-weight:700;cursor:pointer;transition:all .2s}
-.btn-p{background:linear-gradient(135deg,var(--accent),#d93a7a);color:#fff}
+.btn-p{background:linear-gradient(135deg,var(--accent),#d93a7a);color:#fff;position:relative;overflow:hidden}
+.btn-p::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.18) 48%,rgba(255,255,255,.18) 52%,transparent 70%);animation:btnShimmer 3s ease-in-out infinite}
+@keyframes btnShimmer{0%{transform:translateX(-100%) rotate(25deg)}100%{transform:translateX(100%) rotate(25deg)}}
 .btn-p:hover{transform:scale(1.05);box-shadow:0 4px 20px rgba(233,69,96,.4)}
 .btn-s{background:#333;color:#fff}.btn-s:hover{background:#444}
 .btn-sm{padding:6px 14px;font-size:.8em}
@@ -139,11 +141,34 @@ border-radius:14px;padding:14px 20px;max-width:460px;width:calc(100% - 32px);z-i
 /* END */
 #end{text-align:center;padding-top:30px}
 #end h1{font-size:2.4em;margin-bottom:8px;background:linear-gradient(135deg,#ef4444,#3b82f6,#22c55e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.end-rank{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--panel);border-radius:12px;margin:6px 0;max-width:450px}
+.end-rank{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--panel);border-radius:12px;margin:6px 0;max-width:450px;position:relative}
 .end-rank.w{border:2px solid #f5a623}
+.end-rank.w::before{content:'👑';position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:1.5em;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
 .er-pos{font-size:1.5em;width:36px}
 .er-name{flex:1;text-align:left;font-weight:600}
 .er-score{font-weight:700;color:var(--accent)}
+
+/* CONFETTI */
+.confetti{position:fixed;width:10px;height:10px;top:-12px;z-index:200;pointer-events:none;opacity:0;animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
+@keyframes confettiFall{0%{opacity:1;transform:translateY(0) rotate(0deg) scale(1)}50%{opacity:1}100%{opacity:0;transform:translateY(100vh) rotate(var(--spin,720deg)) scale(.5)}}
+
+/* MOBILE RESPONSIVE */
+@media(max-width:480px){
+  #menu h1{font-size:1.8em}
+  .hex-cell{width:48px;height:42px}
+  .hex-board{width:260px;height:280px}
+  .pool-wrap{flex-direction:column;align-items:center;gap:8px}
+  .pool-stack{min-width:auto;width:100%;max-width:220px;padding:10px 12px}
+  .pool-stack:hover{transform:translateY(-2px) scale(1.02)}
+  .btn{padding:14px 28px;font-size:1.05em;min-height:48px}
+  .cbtn{width:48px;height:48px}
+  .hex-cell:hover:not(.locked){transform:scale(1.08)}
+  .ms{padding:12px}
+  .side-panels{gap:4px}
+  .sp{padding:6px 10px;font-size:.8em}
+  .pb-chip{padding:6px 10px;font-size:.75em}
+  .end-rank{padding:10px 14px}
+}
 </style>
 </head>
 <body>
@@ -818,9 +843,30 @@ function evalPlacement(cellIdx,stack,aiType){
 }
 
 // ===================== END GAME =====================
+function showConfetti(){
+  const colors=['#ef4444','#3b82f6','#22c55e','#eab308','#a855f7','#f97316','#ec4899','#06b6d4'];
+  for(let i=0;i<30;i++){
+    const c=document.createElement('div');
+    c.className='confetti';
+    c.style.left=Math.random()*100+'vw';
+    c.style.background=colors[Math.floor(Math.random()*colors.length)];
+    c.style.setProperty('--fall-dur',(2+Math.random()*2)+'s');
+    c.style.setProperty('--fall-delay',(Math.random()*1.5)+'s');
+    c.style.setProperty('--spin',(360+Math.random()*720)+'deg');
+    const shapes=['circle','rect','diamond'];
+    const shape=shapes[Math.floor(Math.random()*shapes.length)];
+    if(shape==='circle')c.style.borderRadius='50%';
+    else if(shape==='diamond'){c.style.width='8px';c.style.height='8px';c.style.transform='rotate(45deg)'}
+    else{c.style.width=(6+Math.random()*8)+'px';c.style.height=(4+Math.random()*4)+'px';c.style.borderRadius='2px'}
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),5000);
+  }
+}
+
 function endGame(){
   G.over=true;
   showS('end');
+  showConfetti();
   const sorted=[...G.players].sort((a,b)=>{
     if(b.score!==a.score)return b.score-a.score;
     // Tiebreak: fewer hexagons on board
