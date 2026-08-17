@@ -407,11 +407,12 @@ async function placeStack(cellIdx,poolIdx){
   let totalCleared=0;
   let cascadeLevel=0;
   let merged=true;
+  let mergeTarget=cellIdx; // Track which cell last RECEIVED hexagons for cascade tie-breaking
 
   while(merged){
     merged=false;
-    // Track which cells changed this iteration
-    const affected=new Set([cellIdx]);
+    // Track which cells changed this iteration — include mergeTarget (the cell that just grew)
+    const affected=new Set([mergeTarget]);
     // Also scan cells that may have become adjacent to same-color after clears
     for(let i=0;i<19;i++){
       if(G.board[i].stack.length>0)affected.add(i);
@@ -450,12 +451,12 @@ async function placeStack(cellIdx,poolIdx){
       if(group.length<=1)continue;
 
       // Find the cell with the most hexagons — that's the merge TARGET
-      // Ties: prefer cellIdx (the placed cell)
+      // Ties: prefer mergeTarget (the cell that last received hexagons in this cascade)
       let targetIdx=group[0];
       let maxSize=G.board[group[0]].stack.length;
       for(let i=1;i<group.length;i++){
         const sz=G.board[group[i]].stack.length;
-        if(sz>maxSize||(sz===maxSize&&group[i]===cellIdx)){
+        if(sz>maxSize||(sz===maxSize&&group[i]===mergeTarget)){
           maxSize=sz;
           targetIdx=group[i];
         }
@@ -480,6 +481,7 @@ async function placeStack(cellIdx,poolIdx){
 
       if(anyMoved){
         merged=true;
+        mergeTarget=targetIdx; // Track the receiving cell for next cascade iteration
         cascadeLevel++;
         // Animate source cells (dimming) and target cell (glowing)
         for(const gi of group){
@@ -490,7 +492,7 @@ async function placeStack(cellIdx,poolIdx){
         for(const gi of group){
           if(gi!==targetIdx)highlightCell(gi,'merge-arrow');
         }
-        await sleep(800);
+        await sleep(1200);
         renderAll();
 
         // Check if the receiving cell reached threshold
@@ -506,7 +508,7 @@ async function placeStack(cellIdx,poolIdx){
             highlightCell(targetIdx,'clearing');
             showScorePop(targetIdx,points,cascadeLevel>1?` ×${cascadeMultiplier.toFixed(1)}`:'');
             if(cascadeLevel>1)showCascadeBurst(targetIdx);
-            await sleep(800);
+            await sleep(1200);
             renderAll();
           }
         }
@@ -792,14 +794,21 @@ function renderBoard(){
         onclick="clickCell(${ci})">`;
       if(!isEmpty){
         html+=`<div class="stack-vis">`;
-        // Show up to 3 bottom layers + top
+        // Show all layers up to 10; if >10 show first 2 + '...' + last 3
         const s=cell.stack;
-        const showLayers=s.length>4?[s[0],s[1],'...',s[s.length-1]]:s;
-        for(let li=0;li<showLayers.length-1;li++){
+        let showLayers;
+        if(s.length<=10){
+          showLayers=s;
+        }else{
+          showLayers=[s[0],s[1],'...',s[s.length-3],s[s.length-2],s[s.length-1]];
+        }
+        // Scale layer height so tall stacks still fit
+        const layerH=showLayers.length>6?3:5;
+        for(let li=0;li<showLayers.length;li++){
           if(showLayers[li]==='...'){
-            html+=`<div class="stack-layer" style="background:#555;width:12px;height:3px"></div>`;
+            html+=`<div class="stack-layer" style="background:#555;width:12px;height:${layerH}px"></div>`;
           }else{
-            html+=`<div class="stack-layer" style="background:${COLORS[showLayers[li]].c}"></div>`;
+            html+=`<div class="stack-layer" style="background:${COLORS[showLayers[li]].c};height:${layerH}px"></div>`;
           }
         }
         html+=`</div>`;
