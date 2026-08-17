@@ -40,28 +40,33 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .round-badge{background:var(--panel2);padding:6px 14px;border-radius:12px;font-weight:700;font-size:1em}
 .turn-info{font-size:.85em;color:var(--dim)}
 .player-bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:6px 0}
-.pb-chip{padding:4px 12px;border-radius:10px;font-size:.8em;font-weight:700;border:2px solid transparent;transition:all .3s;opacity:.5}
+.pb-chip{padding:4px 12px;border-radius:10px;font-size:.8em;font-weight:700;border:2px solid transparent;transition:all .3s;opacity:.5;position:relative;overflow:hidden}
 .pb-chip.current{opacity:1;transform:scale(1.1);box-shadow:0 0 12px rgba(255,255,255,.15)}
+.pb-chip .pb-bar{position:absolute;bottom:0;left:0;height:3px;border-radius:2px;transition:width .6s ease}
 .pb-chip .pb-pts{margin-left:4px;font-size:.9em}
 
 /* HEX BOARD */
 .board-wrap{display:flex;justify-content:center;margin:10px 0;position:relative}
 .hex-board{position:relative;width:340px;height:360px}
 .hex-row{display:flex;justify-content:center;gap:4px;margin-bottom:-12px}
-.hex-cell{width:60px;height:52px;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
-display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;position:relative;
+.hex-cell{width:64px;height:56px;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .6s,border-color .6s,transform .2s,filter .4s;position:relative;
 background:#222;border:2px solid #333;font-weight:700;font-size:.75em;color:#fff;user-select:none}
 .hex-cell:hover:not(.locked){transform:scale(1.12);z-index:2;border-color:var(--accent);filter:brightness(1.3)}
 .hex-cell.locked{cursor:default}
 .hex-cell.empty{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1)}
 .hex-cell .stack-vis{display:flex;flex-direction:column-reverse;gap:1px;align-items:center;pointer-events:none}
-.hex-cell .stack-layer{width:16px;height:5px;border-radius:2px;transition:all .3s}
+.hex-cell .stack-layer{width:16px;height:5px;border-radius:2px;transition:all .8s cubic-bezier(.4,0,.2,1)}
 .hex-cell .stack-top{width:24px;height:10px;border-radius:3px;box-shadow:0 0 6px rgba(255,255,255,.3)}
 .hex-cell .hex-count{position:absolute;bottom:2px;font-size:.6em;font-weight:700;text-shadow:0 1px 2px #000}
-.hex-cell.clearing{animation:clearPop .5s ease-out}
-@keyframes clearPop{0%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.7}100%{transform:scale(0);opacity:0}}
-.hex-cell.merging{animation:mergeGlow .4s ease-in-out}
-@keyframes mergeGlow{0%{filter:brightness(1)}50%{filter:brightness(2) drop-shadow(0 0 8px #fff)}100%{filter:brightness(1)}}
+.hex-cell.clearing{animation:clearPop .8s ease-out}
+@keyframes clearPop{0%{transform:scale(1);opacity:1}30%{transform:scale(1.6);opacity:1;filter:brightness(3)}60%{transform:scale(1.3);opacity:.8}100%{transform:scale(0);opacity:0}}
+.hex-cell.merging{animation:mergeGlow .8s ease-in-out}
+@keyframes mergeGlow{0%{filter:brightness(1)}25%{filter:brightness(1.5) drop-shadow(0 0 6px #fff)}50%{filter:brightness(2.5) drop-shadow(0 0 12px #fff)}75%{filter:brightness(1.8)}100%{filter:brightness(1)}}
+.hex-cell.merge-from{animation:mergeFrom .8s ease-in-out}
+@keyframes mergeFrom{0%{filter:brightness(1)}30%{filter:brightness(2) drop-shadow(0 0 8px var(--accent))}60%{filter:brightness(.5)}100%{filter:brightness(1)}}
+.hex-cell.merge-arrow::after{content:'→';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.4em;z-index:10;color:#fff;text-shadow:0 0 8px var(--accent);pointer-events:none;animation:arrowFly .8s ease-out forwards}
+@keyframes arrowFly{0%{opacity:0;transform:translate(-200%,-50%)}30%{opacity:1}100%{opacity:0;transform:translate(100%,-50%)}}
 .hex-cell.valid-target{box-shadow:0 0 12px rgba(233,69,96,.6);border-color:var(--accent)}
 
 /* POOL */
@@ -76,9 +81,12 @@ border:2px solid #333;min-width:60px;text-align:center}
 .pool-stack .ps-label{font-size:.7em;color:var(--dim);margin-top:2px}
 
 /* SCORE POPUP */
-.score-pop{position:fixed;pointer-events:none;font-size:1.8em;font-weight:900;z-index:100;
-text-shadow:0 2px 8px rgba(0,0,0,.8);animation:popUp 1s ease-out forwards}
-@keyframes popUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(1.5)}}
+.score-pop{position:fixed;pointer-events:none;font-size:2.2em;font-weight:900;z-index:100;
+text-shadow:0 2px 12px rgba(0,0,0,.9),0 0 20px var(--accent);animation:popUp 1.2s ease-out forwards}
+@keyframes popUp{0%{opacity:1;transform:translateY(0) scale(.5)}20%{transform:translateY(-10px) scale(1.3)}100%{opacity:0;transform:translateY(-80px) scale(1)}}
+.cascade-burst{position:fixed;pointer-events:none;z-index:99;font-size:2em;
+animation:burstSpin 1s ease-out forwards}
+@keyframes burstSpin{0%{opacity:1;transform:scale(0) rotate(0deg)}50%{opacity:1;transform:scale(1.5) rotate(180deg)}100%{opacity:0;transform:scale(2) rotate(360deg)}}
 
 /* SIDE PANELS */
 .side-panels{display:flex;flex-direction:column;gap:6px;margin-top:8px;width:100%;max-width:600px}
@@ -107,7 +115,7 @@ border-radius:14px;padding:14px 20px;max-width:460px;width:calc(100% - 32px);z-i
 .tut-box p{margin-bottom:8px;line-height:1.4;font-size:.9em}
 
 /* MSG */
-.msg{background:rgba(233,69,96,.12);border:1px solid var(--accent);border-radius:10px;padding:8px 16px;text-align:center;font-weight:600;font-size:.9em;margin-top:8px;max-width:600px;width:100%}
+.msg{background:rgba(233,69,96,.12);border:1px solid var(--accent);border-radius:10px;padding:6px 12px;text-align:center;font-weight:600;font-size:.8em;margin-top:6px;max-width:600px;width:100%;min-height:28px;transition:all .3s}
 
 /* END */
 #end{text-align:center;padding-top:30px}
@@ -344,7 +352,7 @@ function startTurn(){
   }
 
   renderAll();
-  setMsg(`🎯 ${p.name}: selecciona una pila del pool y colócala`);
+  setMsg(`🎯 ${p.name}`);
   if(p.type!=='human') setTimeout(aiTurn,600);
 }
 
@@ -394,7 +402,7 @@ async function placeStack(cellIdx,poolIdx){
   renderAll();
   await sleep(300);
 
-  // CASCADING MERGE: BFS from placed cell
+  // CASCADING MERGE: scan for all merge opportunities globally
   const pi=getCurrentPlayerIdx();
   let totalCleared=0;
   let cascadeLevel=0;
@@ -402,34 +410,61 @@ async function placeStack(cellIdx,poolIdx){
 
   while(merged){
     merged=false;
-    // Check each color present in the placed cell
-    const colorsInCell=new Set(G.board[cellIdx].stack);
+    // Track which cells changed this iteration
+    const affected=new Set([cellIdx]);
+    // Also scan cells that may have become adjacent to same-color after clears
+    for(let i=0;i<19;i++){
+      if(G.board[i].stack.length>0)affected.add(i);
+    }
 
-    for(const color of colorsInCell){
+    const processed=new Set(); // avoid re-processing same group
+
+    for(const startCell of affected){
+      if(G.board[startCell].stack.length===0)continue;
+      const color=getTopColor(startCell);
+      if(!color)continue;
+      const key=`${startCell}-${color}`;
+      if(processed.has(key))continue;
+
       // BFS to find ALL connected cells with this color on top
-      const visited=new Set([cellIdx]);
-      const group=[cellIdx];
-      const queue=[cellIdx];
+      const visited=new Set([startCell]);
+      const group=[startCell];
+      const queue=[startCell];
 
       while(queue.length>0){
         const ci=queue.shift();
         for(const ni of ADJ[ci]){
           if(visited.has(ni))continue;
           visited.add(ni);
-          if(getTopColor(ni)===color&&G.board[ni].stack.length>0){
+          if(G.board[ni].stack.length>0&&getTopColor(ni)===color){
             group.push(ni);
             queue.push(ni);
           }
         }
       }
 
-      // Only merge if there are adjacent cells with this color (group > 1)
+      // Mark all cells in this group as processed
+      for(const gi of group)processed.add(`${gi}-${color}`);
+
+      // Only merge if group has 2+ cells
       if(group.length<=1)continue;
 
-      // Merge: move all hexagons of this color from neighbors into cellIdx
-      let moved=false;
+      // Find the cell with the most hexagons — that's the merge TARGET
+      // Ties: prefer cellIdx (the placed cell)
+      let targetIdx=group[0];
+      let maxSize=G.board[group[0]].stack.length;
+      for(let i=1;i<group.length;i++){
+        const sz=G.board[group[i]].stack.length;
+        if(sz>maxSize||(sz===maxSize&&group[i]===cellIdx)){
+          maxSize=sz;
+          targetIdx=group[i];
+        }
+      }
+
+      // Merge: move all hexagons of this color from smaller stacks INTO targetIdx
+      let anyMoved=false;
       for(const gi of group){
-        if(gi===cellIdx)continue;
+        if(gi===targetIdx)continue;
         const remaining=[];
         const toMove=[];
         for(const h of G.board[gi].stack){
@@ -438,35 +473,43 @@ async function placeStack(cellIdx,poolIdx){
         }
         if(toMove.length>0){
           G.board[gi].stack=remaining;
-          for(const h of toMove) G.board[cellIdx].stack.push(h);
-          moved=true;
+          for(const h of toMove) G.board[targetIdx].stack.push(h);
+          anyMoved=true;
         }
       }
 
-      if(moved){
+      if(anyMoved){
         merged=true;
         cascadeLevel++;
-        highlightCell(cellIdx,'merging');
-        await sleep(300);
+        // Animate source cells (dimming) and target cell (glowing)
+        for(const gi of group){
+          if(gi!==targetIdx)highlightCell(gi,'merge-from');
+        }
+        highlightCell(targetIdx,'merging');
+        // Show directional arrows on source cells
+        for(const gi of group){
+          if(gi!==targetIdx)highlightCell(gi,'merge-arrow');
+        }
+        await sleep(800);
         renderAll();
-      }
-    }
 
-    // After merging, check if cellIdx reached threshold
-    // Check all colors that could form groups of THRESHOLD+
-    const topC=getTopColor(cellIdx);
-    if(topC){
-      const topCount=countTopColor(cellIdx);
-      if(topCount>=THRESHOLD){
-        const cleared=removeTopColor(cellIdx);
-        totalCleared+=cleared;
-        const cascadeMultiplier=1+(cascadeLevel-1)*0.5;
-        const points=Math.round(cleared*cascadeMultiplier);
-        G.players[pi].score+=points;
-        highlightCell(cellIdx,'clearing');
-        showScorePop(cellIdx,points,cascadeLevel>1?` ×${cascadeMultiplier.toFixed(1)}`:'');
-        await sleep(500);
-        renderAll();
+        // Check if the receiving cell reached threshold
+        const topC=getTopColor(targetIdx);
+        if(topC){
+          const topCount=countTopColor(targetIdx);
+          if(topCount>=THRESHOLD){
+            const cleared=removeTopColor(targetIdx);
+            totalCleared+=cleared;
+            const cascadeMultiplier=1+(cascadeLevel-1)*0.5;
+            const points=Math.round(cleared*cascadeMultiplier);
+            G.players[pi].score+=points;
+            highlightCell(targetIdx,'clearing');
+            showScorePop(targetIdx,points,cascadeLevel>1?` ×${cascadeMultiplier.toFixed(1)}`:'');
+            if(cascadeLevel>1)showCascadeBurst(targetIdx);
+            await sleep(800);
+            renderAll();
+          }
+        }
       }
     }
   }
@@ -513,7 +556,20 @@ function removeTopColor(cellIdx){
 
 function highlightCell(cellIdx,cls){
   const el=document.querySelector(`.hex-cell[data-ci="${cellIdx}"]`);
-  if(el){el.classList.add(cls);setTimeout(()=>el.classList.remove(cls),500)}
+  if(el){el.classList.add(cls);setTimeout(()=>el.classList.remove(cls),800)}
+}
+
+function showCascadeBurst(cellIdx){
+  const el=document.querySelector(`.hex-cell[data-ci="${cellIdx}"]`);
+  if(!el)return;
+  const r=el.getBoundingClientRect();
+  const burst=document.createElement('div');
+  burst.className='cascade-burst';
+  burst.textContent='✨';
+  burst.style.left=r.left+r.width/2-15+'px';
+  burst.style.top=r.top+r.height/2-15+'px';
+  document.body.appendChild(burst);
+  setTimeout(()=>burst.remove(),1000);
 }
 
 function showScorePop(cellIdx,pts,extra=''){
@@ -592,34 +648,93 @@ function evalPlacement(cellIdx,stack,aiType){
     return adjSame*5+height;
   }
 
-  // Hard: simulate merge cascade for each unique color in the stack
-  let simTotal=height;
-  const uniqueColors=new Set(layers);
-  for(const color of uniqueColors){
-    const visited=new Set([cellIdx]);
-    const queue=[];
-    for(const ni of ADJ[cellIdx]){
-      if(getTopColor(ni)===color)queue.push(ni);
-    }
-    while(queue.length>0){
-      const ci=queue.shift();
-      if(visited.has(ci))continue;
-      visited.add(ci);
-      const nTop=getTopColor(ci);
-      if(nTop===color){
-        const s=G.board[ci].stack;
-        let cnt=0;
-        for(let i=s.length-1;i>=0;i--){if(s[i]===color)cnt++;else break}
-        simTotal+=cnt;
+  // Hard: simulate merge cascade with bidirectional merge logic
+  // Build a virtual board (copy stack sizes + top colors)
+  const vBoard=G.board.map(c=>({
+    size:c.stack.length,
+    top:c.stack.length>0?c.stack[c.stack.length-1]:null
+  }));
+
+  // Place the virtual stack
+  vBoard[cellIdx].size+=height;
+  vBoard[cellIdx].top=layers[layers.length-1]; // top of placed stack
+
+  let cascadeScore=0;
+  let cascadeLevel=0;
+  let simChanged=true;
+  const virtualClears=new Set();
+
+  while(simChanged){
+    simChanged=false;
+    const processed=new Set();
+
+    for(let startCell=0;startCell<19;startCell++){
+      if(vBoard[startCell].size===0)continue;
+      const color=vBoard[startCell].top;
+      if(!color)continue;
+      const key=`${startCell}-${color}`;
+      if(processed.has(key))continue;
+
+      // BFS for connected same-color group
+      const visited=new Set([startCell]);
+      const group=[startCell];
+      const queue=[startCell];
+      while(queue.length>0){
+        const ci=queue.shift();
         for(const ni of ADJ[ci]){
-          if(!visited.has(ni)&&getTopColor(ni)===color)queue.push(ni);
+          if(visited.has(ni))continue;
+          visited.add(ni);
+          if(vBoard[ni].size>0&&vBoard[ni].top===color){
+            group.push(ni);
+            queue.push(ni);
+          }
+        }
+      }
+
+      for(const gi of group)processed.add(`${gi}-${color}`);
+      if(group.length<=1)continue;
+
+      // Find target (largest stack, ties: prefer cellIdx)
+      let targetIdx=group[0];
+      let maxSize=vBoard[group[0]].size;
+      for(let i=1;i<group.length;i++){
+        const sz=vBoard[group[i]].size;
+        if(sz>maxSize||(sz===maxSize&&group[i]===cellIdx)){
+          maxSize=sz;
+          targetIdx=group[i];
+        }
+      }
+
+      // Merge: sum all sizes into target
+      let totalSize=0;
+      let anyMoved=false;
+      for(const gi of group){
+        if(gi!==targetIdx){
+          totalSize+=vBoard[gi].size;
+          vBoard[gi].size=0;
+          vBoard[gi].top=null;
+          anyMoved=true;
+        }
+      }
+      if(anyMoved){
+        vBoard[targetIdx].size+=totalSize;
+        cascadeLevel++;
+        simChanged=true;
+
+        // Check threshold
+        if(vBoard[targetIdx].size>=THRESHOLD){
+          const cleared=vBoard[targetIdx].size;
+          cascadeScore+=Math.round(cleared*(1+(cascadeLevel-1)*0.5));
+          vBoard[targetIdx].size=0;
+          vBoard[targetIdx].top=null;
         }
       }
     }
   }
 
-  let score=simTotal*3;
-  if(simTotal>=THRESHOLD)score+=50; // bonus for clearing
+  // Base score: cascade points + bonus for having mergeable adjacencies
+  let score=cascadeScore*3;
+  if(cascadeScore===0)score=adjSame*5+height; // fallback if no merge
   return score;
 }
 
@@ -713,9 +828,10 @@ function renderPool(){
     for(let j=0;j<Math.min(s.height,7);j++){
       html+=`<div class="ps-layer" style="background:${COLORS[s.layers[j]].c}"></div>`;
     }
-    // Label: show unique colors
-    const uniqueColors=[...new Set(s.layers)].map(c=>COLORS[c].n).join('+');
-    html+=`</div><div class="ps-label">${s.height} · ${uniqueColors}</div></div>`;
+    // Label: show color dots
+    const uniqueColors=[...new Set(s.layers)];
+    const dots=uniqueColors.map(c=>`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${COLORS[c].c};margin:1px"></span>`).join('');
+    html+=`</div><div class="ps-label">${s.height} ${dots}</div></div>`;
   }
   wrap.innerHTML=html;
 }
@@ -723,10 +839,13 @@ function renderPool(){
 function renderPlayerBar(){
   const bar=document.getElementById('playerBar');
   const pi=getCurrentPlayerIdx();
+  const maxScore=Math.max(1,...G.players.map(p=>p.score));
   bar.innerHTML=G.players.map((p,i)=>{
     const isCur=i===pi&&!G.over;
+    const pct=Math.min(100,Math.round(p.score/maxScore*100));
     return`<div class="pb-chip ${isCur?'current':''}" style="color:${p.color};border-color:${p.color};background:${isCur?p.color+'22':'transparent'}">
-    ${p.name} <span class="pb-pts">${p.score}pts</span></div>`;
+    ${p.name} <span class="pb-pts">${p.score}</span>
+    <div class="pb-bar" style="width:${pct}%;background:${p.color}"></div></div>`;
   }).join('');
 }
 
