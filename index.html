@@ -86,11 +86,11 @@ text-shadow:0 1px 0 rgba(255,255,255,.35),0 -1px 1px rgba(0,0,0,.2);box-shadow:0
 
 /* GAME LAYOUT */
 #game{padding:8px;width:100%;background:radial-gradient(430px 390px at 50% 42%,rgba(26,32,53,.65),transparent 72%)}
-.g-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;padding:0 4px;margin-bottom:6px}
-.g-hud-l,.g-hud-r{flex:1;display:flex;align-items:center;gap:8px;min-width:0}
+.g-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:0 4px;margin-bottom:6px;position:relative}
+.g-hud-l,.g-hud-r{flex:1;display:flex;align-items:center;gap:8px;min-width:0;position:relative}
 .g-hud-l{justify-content:flex-start}
 .g-hud-r{justify-content:flex-end}
-.g-hud-c{display:flex;justify-content:center;flex:none}
+.g-hud-c{display:flex;justify-content:center;flex:none;position:relative}
 
 /* CHIP DE TURNO — hexágono alargado dorado (master 02_tablero) */
 .turn-chip{position:relative;font-size:.8em;font-weight:800;font-family:'Baloo 2';color:#2A2010;letter-spacing:.02em;white-space:nowrap;
@@ -109,7 +109,7 @@ display:flex;flex-direction:column;align-items:center;justify-content:center;gap
 .round-badge .rb-v{font-size:1.05em;font-family:'Baloo 2';font-weight:800;color:#FFE566;text-shadow:0 0 8px rgba(255,215,0,.6);line-height:1}
 
 /* CHIP SCORE — zona superior derecha */
-.score-chip{background:#22272E;border:1.5px solid #3D6B8A;border-radius:10px;padding:4px 10px;min-width:74px;text-align:right;
+.score-chip{background:#22272E;border:1.5px solid #3D6B8A;border-radius:10px;padding:4px 10px;min-width:74px;text-align:right;position:relative;z-index:10;
 box-shadow:0 0 8px rgba(0,168,255,.18),inset 0 0 8px rgba(0,0,0,.4)}
 .score-chip .sc-l{display:block;font-size:.5em;letter-spacing:.14em;color:#9AA3B5;font-weight:800;line-height:1.1}
 .score-chip .sc-v{display:block;font-family:'Baloo 2';font-weight:800;font-size:1.12em;color:#F4F6FB;text-shadow:0 0 8px rgba(255,255,255,.35);line-height:1.15}
@@ -124,14 +124,20 @@ box-shadow:0 0 8px rgba(0,168,255,.18),inset 0 0 8px rgba(0,0,0,.4)}
 .board-wrap{display:flex;justify-content:center;margin:10px 0;position:relative}
 .hex-board{position:relative;width:340px;height:360px;filter:drop-shadow(0 0 18px rgba(0,168,255,.16))}
 .hex-row{display:flex;justify-content:center;gap:4px;margin-bottom:-12px}
-.hex-cell{width:64px;height:56px;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
-display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .6s,border-color .6s,transform .2s,filter .4s;position:relative;
-background:#111824;border:2px solid var(--borde-neon);font-weight:700;font-size:.75em;color:#fff;user-select:none;
-box-shadow:inset 0 0 10px rgba(0,168,255,.18),0 0 8px rgba(0,168,255,.3)}
-.hex-cell:hover:not(.locked){transform:scale(1.12);z-index:2;border-color:var(--accent);filter:brightness(1.3);box-shadow:inset 0 0 10px rgba(0,168,255,.14),0 0 18px rgba(255,215,0,.55)}
+.hex-cell{width:64px;height:56px;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;
+font-weight:700;font-size:.75em;color:#fff;user-select:none;z-index:0;
+transition:transform .2s,filter .4s}
+/* Capa de fondo: forma hexagonal neon (el hex vacío). Las pilas asoman COMPLETAS, sin clip. */
+.hex-cell::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
+clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+background:var(--cell-bg,#111824);
+border:2px solid var(--cell-bd,var(--borde-neon));
+box-shadow:inset 0 0 10px rgba(0,168,255,.18),inset 0 -3px 6px rgba(0,0,0,.35)}
+.hex-cell:hover:not(.locked){transform:scale(1.12);z-index:2}
+.hex-cell:hover:not(.locked)::before{--cell-bd:var(--accent);filter:brightness(1.3)}
 .hex-cell.locked{cursor:default}
-.hex-cell.empty{background:linear-gradient(180deg,#131C2B,#0E141F);border-color:var(--borde-neon);
-box-shadow:inset 0 0 12px rgba(0,168,255,.15),0 0 10px rgba(0,168,255,.4),inset 0 -3px 6px rgba(0,0,0,.35)}
+.hex-cell.empty{--cell-bg:linear-gradient(180deg,#131C2B,#0E141F);--cell-bd:var(--borde-neon)}
+.hex-cell.empty::before{box-shadow:inset 0 0 12px rgba(0,168,255,.15),0 0 10px rgba(0,168,255,.4),inset 0 -3px 6px rgba(0,0,0,.35)}
 .hex-cell .stack-vis{display:flex;flex-direction:column-reverse;align-items:center;pointer-events:none;padding-top:7px}
 .hex-cell .stack-hex{width:30px;height:30px;position:relative;flex:none;z-index:1;margin-top:-19px;
 clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
@@ -164,7 +170,7 @@ text-shadow:0 0 20px rgba(0,0,0,.9),0 0 30px var(--accent),0 0 60px var(--accent
 @keyframes cascadeTextPop{0%{opacity:1;transform:translate(-50%,-50%) scale(0) rotate(-10deg)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.3) rotate(3deg)}30%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0deg)}70%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0deg)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.1) rotate(2deg)}}
 .hex-cell.merge-arrow::after{content:'→';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.4em;z-index:10;color:#fff;text-shadow:0 0 8px var(--accent);pointer-events:none;animation:arrowFly .8s ease-out forwards}
 @keyframes arrowFly{0%{opacity:0;transform:translate(-200%,-50%)}30%{opacity:1}100%{opacity:0;transform:translate(100%,-50%)}}
-.hex-cell.valid-target{box-shadow:0 0 14px rgba(255,215,0,.6),inset 0 0 10px rgba(255,215,0,.25);border-color:var(--accent)}
+.hex-cell.valid-target::before{--cell-bd:var(--accent);filter:drop-shadow(0 0 6px rgba(255,215,0,.55));box-shadow:inset 0 0 10px rgba(255,215,0,.25)}
 
 /* POOL */
 .pool-wrap{display:flex;justify-content:center;gap:12px;margin:10px 0;flex-wrap:wrap}
@@ -259,11 +265,15 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
   .ms h3{margin:-12px -12px 10px;padding:9px 12px;border-radius:12px 12px 0 0}
   .turn-info{font-size:.72em}
   .round-badge{font-size:.85em;padding:4px 10px}
-  .hex-cell{width:48px;height:42px}
-  .hex-board{width:260px;height:280px}
-  .pool-wrap{flex-direction:column;align-items:center;gap:8px}
-  .pool-stack{min-width:auto;width:100%;max-width:220px;padding:10px 12px}
+  .hex-cell{width:56px;height:48px}
+  .hex-board{width:100%;max-width:340px;height:300px}
+  .pool-wrap{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px}
+  .pool-stack{min-width:0;width:auto;padding:6px 8px}
+  .pool-stack .ps-stack-hex{width:24px;height:24px;margin-top:-14px}
+  .pool-stack .ps-hex{margin:3px 0 1px}
+  .pool-stack .ps-label{font-size:.6em;margin-top:1px}
   .pool-stack:hover{transform:translateY(-2px) scale(1.02)}
+  .hex-cell .stack-hex{width:26px;height:26px;margin-top:-16px}
   .btn{padding:14px 28px;font-size:1.05em;min-height:48px}
   .cbtn{width:48px;height:48px}
   .hex-cell:hover:not(.locked){transform:scale(1.08)}
@@ -320,11 +330,6 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
   <div class="g-top">
     <div class="g-hud-l">
       <div class="turn-chip" id="turnInfo"></div>
-      <div class="score-chip">
-        <span class="sc-l">SCORE</span>
-        <span class="sc-v" id="scoreVal">0</span>
-        <span class="sc-n" id="scoreName"></span>
-      </div>
     </div>
     <div class="g-hud-c">
       <div class="round-badge" id="roundBadge">
@@ -333,6 +338,11 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
       </div>
     </div>
     <div class="g-hud-r">
+      <div class="score-chip">
+        <span class="sc-l">SCORE</span>
+        <span class="sc-v" id="scoreVal">0</span>
+        <span class="sc-n" id="scoreName"></span>
+      </div>
       <button class="btn btn-s btn-sm" onclick="showRules()">📜</button>
     </div>
   </div>
@@ -1054,7 +1064,7 @@ function renderBoard(){
       const bg=isEmpty?'':COLORS[topColor].c;
 
       html+=`<div class="hex-cell ${isEmpty?'empty':'locked'}" data-ci="${ci}"
-        style="${!isEmpty?'background:'+bg+';border-color:'+borderColor+';box-shadow:inset 0 0 10px rgba(0,168,255,.14),0 0 14px '+borderColor+'66':''}"
+        style="${!isEmpty?'--cell-bg:'+bg+';--cell-bd:'+borderColor:''}"
         onclick="clickCell(${ci})">`;
       if(!isEmpty){
         html+=`<div class="stack-vis">`;
