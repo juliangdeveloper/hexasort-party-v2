@@ -121,7 +121,7 @@ box-shadow:0 0 8px rgba(0,168,255,.18),inset 0 0 8px rgba(0,0,0,.4)}
 .pb-chip .pb-pts{margin-left:4px;font-size:.9em;font-family:'Baloo 2'}
 
 /* HEX BOARD */
-.board-wrap{display:flex;justify-content:center;margin:10px 0;position:relative}
+.board-wrap{display:flex;justify-content:center;margin:8px 0 2px;position:relative}
 .hex-board{position:relative;width:340px;height:360px;filter:drop-shadow(0 0 18px rgba(0,168,255,.16))}
 .hex-row{display:flex;justify-content:center;gap:4px;margin-bottom:-12px}
 .hex-cell{width:64px;height:56px;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;
@@ -138,7 +138,7 @@ box-shadow:inset 0 0 10px rgba(0,168,255,.18),inset 0 -3px 6px rgba(0,0,0,.35)}
 .hex-cell.locked{cursor:default}
 .hex-cell.empty{--cell-bg:linear-gradient(180deg,#131C2B,#0E141F);--cell-bd:var(--borde-neon)}
 .hex-cell.empty::before{box-shadow:inset 0 0 12px rgba(0,168,255,.15),0 0 10px rgba(0,168,255,.4),inset 0 -3px 6px rgba(0,0,0,.35)}
-.hex-cell .stack-vis{display:flex;flex-direction:column-reverse;align-items:center;pointer-events:none;padding-top:6px}
+.hex-cell .stack-vis{position:absolute;left:50%;bottom:2px;transform:translateX(-50%);display:flex;flex-direction:column-reverse;align-items:center;pointer-events:none;padding:0}
 .hex-cell .stack-hex{width:57px;height:50px;position:relative;flex:none;z-index:1;margin-top:-30px;
 clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
 background:linear-gradient(180deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,.12) 30%,rgba(0,0,0,.1) 55%,rgba(0,0,0,.4) 100%),var(--hc);
@@ -166,14 +166,14 @@ background:rgba(255,255,255,.92);padding:0 4px;border-radius:6px;line-height:1.4
 
 /* CASCADE TEXT OVERLAY */
 .cascade-text{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);pointer-events:none;z-index:90;font-size:2.8em;font-weight:900;font-family:'Baloo 2';
-text-shadow:0 0 20px rgba(0,0,0,.9),0 0 30px var(--accent),0 0 60px var(--accent);white-space:nowrap;animation:cascadeTextPop 1.5s ease-out forwards}
+text-shadow:0 0 20px rgba(0,0,0,.9),0 0 30px var(--accent),0 0 60px var(--accent);white-space:nowrap;animation:cascadeTextPop 2s ease-out forwards}
 @keyframes cascadeTextPop{0%{opacity:1;transform:translate(-50%,-50%) scale(0) rotate(-10deg)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.3) rotate(3deg)}30%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0deg)}70%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0deg)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.1) rotate(2deg)}}
 .hex-cell.merge-arrow::after{content:'→';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.4em;z-index:10;color:#fff;text-shadow:0 0 8px var(--accent);pointer-events:none;animation:arrowFly .8s ease-out forwards}
 @keyframes arrowFly{0%{opacity:0;transform:translate(-200%,-50%)}30%{opacity:1}100%{opacity:0;transform:translate(100%,-50%)}}
 .hex-cell.valid-target::before{--cell-bd:var(--accent);filter:drop-shadow(0 0 6px rgba(255,215,0,.55));box-shadow:inset 0 0 10px rgba(255,215,0,.25)}
 
 /* POOL */
-.pool-wrap{display:flex;justify-content:center;gap:12px;margin:10px 0;flex-wrap:wrap}
+.pool-wrap{display:flex;justify-content:center;gap:12px;margin:2px 0 8px;flex-wrap:wrap}
 .pool-stack{background:linear-gradient(180deg,#1E2636,#141A26);border-radius:14px;padding:10px 14px;cursor:pointer;transition:all .3s cubic-bezier(.4,0,.2,1);
 border:2px solid var(--borde-neon);box-shadow:0 0 8px rgba(0,168,255,.22),inset 0 0 12px rgba(0,0,0,.4);min-width:60px;text-align:center;position:relative;overflow:hidden}
 .pool-stack::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,168,255,.1),transparent 60%);opacity:0;transition:opacity .3s}
@@ -431,6 +431,7 @@ const ADJ = [
 ];
 
 const THRESHOLD = 10;
+const CASCADE_STEP_MS = 1600; // pausa visible por eslabón de cascada
 
 // ===================== GAME STATE =====================
 let G = {
@@ -639,38 +640,46 @@ async function placeStack(cellIdx,poolIdx){
       if(group.length<=1)continue;
 
       let targetIdx=group[0];
-      // R2: prefer a candidate that, once merged, creates NEW same-colour adjacencies
-      // with non-group neighbours — that chains/cascades further even if not the lowest.
-      const cascadeTop={};
-      let cMax=-1;
+      // R2 (FIX): la heurística vieja siempre daba 0 — el BFS del grupo ya absorbía a
+      // todos los vecinos del mismo color. Ahora se SIMULA la fusión en cada candidato
+      // (tops post-merge: las fuentes pierden su color, el candidato lo conserva) y se
+      // cuentan las aristas del mismo color que quedan tocando celdas cambiadas:
+      // más aristas = más encadenado disponible para la siguiente iteración.
+      const chains={};
+      let bestChain=-1;
       for(const gi of group){
-        let cs=0;
-        for(const ni of ADJ[gi]){
-          if(group.indexOf(ni)>=0)continue;
-          if(G.board[ni].stack.length>0&&getTopColor(ni)===color)cs++;
+        const post=new Array(19);
+        for(let i=0;i<19;i++){
+          const s=G.board[i].stack;
+          post[i]=s.length>0?s[s.length-1]:null;
         }
-        cascadeTop[gi]=cs;
-        if(cs>cMax)cMax=cs;
-      }
-      if(cMax>0){
-        // R2 has a chaining candidate — among those with the most new adjacencies,
-        // prefer the lowest stack; tie → mergeTarget.
-        let best=null;
-        for(const gi of group){
-          if(cascadeTop[gi]!==cMax)continue;
-          if(best===null||G.board[gi].stack.length<G.board[best].stack.length||
-            (G.board[gi].stack.length===G.board[best].stack.length&&gi===mergeTarget))best=gi;
+        for(const g2 of group){
+          if(g2===gi)continue;
+          const rem=G.board[g2].stack.filter(h=>h!==color);
+          post[g2]=rem.length>0?rem[rem.length-1]:null;
         }
-        targetIdx=best;
-      }else{
-        // R1: no new adjacency → jump toward the LOWEST stack (min hexagons); tie → mergeTarget.
-        let minSize=G.board[group[0]].stack.length;
-        for(let i=1;i<group.length;i++){
-          const sz=G.board[group[i]].stack.length;
-          if(sz<minSize||(sz===minSize&&group[i]===mergeTarget)){
-            minSize=sz;targetIdx=group[i];
+        let chain=0;
+        const seen=new Set();
+        for(const g2 of group){
+          if(post[g2]===null)continue;
+          for(const ni of ADJ[g2]){
+            const k=g2<ni?g2+'-'+ni:ni+'-'+g2;
+            if(seen.has(k))continue;
+            seen.add(k);
+            const nt=post[ni];
+            if(nt!==null&&nt===post[g2])chain++;
           }
         }
+        chains[gi]=chain;
+        const sz=G.board[gi].stack.length;
+        if(bestChain<0||chain>bestChain||
+          (chain===bestChain&&(sz<G.board[targetIdx].stack.length||
+          (sz===G.board[targetIdx].stack.length&&gi===mergeTarget)))){
+          bestChain=chain;targetIdx=gi;
+        }
+      }
+      if(bestChain>0){
+        console.log(`[R2] encadenado: candidatos [${group}] aristasNuevas=[${group.map(g=>chains[g]).join(',')}] -> target=${targetIdx} (${bestChain} enlaces)`);
       }
 
       // Merge: move all hexagons of this color from smaller stacks INTO targetIdx
@@ -694,6 +703,7 @@ async function placeStack(cellIdx,poolIdx){
         merged=true;
         mergeTarget=targetIdx; // Track the receiving cell for next cascade iteration
         cascadeLevel++;
+        console.log(`[MERGE] eslabón=${cascadeLevel} color=${color} (${COLORS[color].n}) grupo=[${group}] fuente=[${group.filter(g=>g!==targetIdx).join(',')}] -> destino=${targetIdx} | tope=${COLORS[getTopColor(targetIdx)].n} ×${countTopColor(targetIdx)} total=${G.board[targetIdx].stack.length} | ronda=${G.round} jugador=${G.players[getCurrentPlayerIdx()].name}`);
         // Merge slide overlays: animate dots from sources to target
         const sourceCells=group.filter(gi=>gi!==targetIdx);
         showMergeOverlays(sourceCells,targetIdx,color);
@@ -706,7 +716,7 @@ async function placeStack(cellIdx,poolIdx){
         for(const gi of group){
           if(gi!==targetIdx)highlightCell(gi,'merge-arrow');
         }
-        await sleep(1200);
+        await sleep(CASCADE_STEP_MS);
         renderAll();
 
         // Check if the receiving cell reached threshold
@@ -726,7 +736,7 @@ async function placeStack(cellIdx,poolIdx){
               showCascadeBurst(targetIdx);
               showCascadeText(cascadeLevel);
             }
-            await sleep(1200);
+            await sleep(CASCADE_STEP_MS);
             renderAll();
           }
         }
@@ -827,7 +837,7 @@ function showCascadeText(level){
   el.textContent=`✨ CASCADE ×${level}`;
   el.style.color='var(--accent)';
   document.body.appendChild(el);
-  setTimeout(()=>el.remove(),1500);
+  setTimeout(()=>el.remove(),2000);
 }
 
 function showCascadeBurst(cellIdx){
