@@ -599,6 +599,9 @@ async function placeStack(cellIdx,poolIdx){
   let mergeTarget=cellIdx; // Track which cell last RECEIVED hexagons for cascade tie-breaking
 
   while(merged){
+    // CHAIN (T1): mejor cadena simulada para el estado actual (profundidad <=6)
+    const chainPlan=computeBestChain();
+    let chainCursor=0;
     merged=false;
     // Track which cells changed this iteration — include mergeTarget (the cell that just grew)
     const affected=new Set([mergeTarget]);
@@ -640,6 +643,21 @@ async function placeStack(cellIdx,poolIdx){
       if(group.length<=1)continue;
 
       let targetIdx=group[0];
+      // CHAIN (T1): consumir el primer paso del plan del mismo color cuyo
+      // grupo solape el grupo actual (fallback R2 si no hay paso que encaje)
+      let planStep=null;
+      if(chainPlan){
+        for(let c0=chainCursor;c0<chainPlan.length;c0++){
+          const stp=chainPlan[c0];
+          if(stp.color===color&&stp.source.some(si=>group.includes(si))){
+            planStep=stp;chainCursor=c0+1;break;
+          }
+        }
+      }
+      if(planStep){
+        targetIdx=planStep.target;
+        console.log(`[CHAIN] eslabón=${cascadeLevel} color=${COLORS[color].n} grupo=[${group.join(',')}] -> target=${targetIdx} (plan)`);
+      }else{
       // R2 (FIX): la heurística vieja siempre daba 0 — el BFS del grupo ya absorbía a
       // todos los vecinos del mismo color. Ahora se SIMULA la fusión en cada candidato
       // (tops post-merge: las fuentes pierden su color, el candidato lo conserva) y se
@@ -681,18 +699,22 @@ async function placeStack(cellIdx,poolIdx){
       if(bestChain>0){
         console.log(`[R2] encadenado: candidatos [${group}] aristasNuevas=[${group.map(g=>chains[g]).join(',')}] -> target=${targetIdx} (${bestChain} enlaces)`);
       }
+      }
 
       // Merge: move all hexagons of this color from smaller stacks INTO targetIdx
       let anyMoved=false;
+      // T2: registrar cuántos hex del run volaron por fuente (para animación)
+      const srcRuns={};
       for(const gi of group){
         if(gi===targetIdx)continue;
-        const remaining=[];
+        // T1: SOLO se mueve el run contiguo del tope (mecánica de pila, el estado
+        // final es el único objetivo: hex contiguos del mismo color en torre)
+        const nRun=countTopColor(gi);
         const toMove=[];
-        for(const h of G.board[gi].stack){
-          if(h===color)toMove.push(h);
-          else remaining.push(h);
-        }
+        for(let z=nRun;z>0;z--)toMove.push(G.board[gi].stack.pop());
+        const remaining=G.board[gi].stack;
         if(toMove.length>0){
+          srcRuns[gi]=toMove.length;
           G.board[gi].stack=remaining;
           for(const h of toMove) G.board[targetIdx].stack.push(h);
           anyMoved=true;
@@ -707,6 +729,7 @@ async function placeStack(cellIdx,poolIdx){
         // Merge slide overlays: animate dots from sources to target
         const sourceCells=group.filter(gi=>gi!==targetIdx);
         showMergeOverlays(sourceCells,targetIdx,color);
+        flyHexes(sourceCells,targetIdx,color,srcRuns);
         // Animate source cells (dimming) and target cell (glowing)
         for(const gi of group){
           if(gi!==targetIdx)highlightCell(gi,'merge-from');
@@ -745,6 +768,7 @@ async function placeStack(cellIdx,poolIdx){
   }
 
   G.animating=false;
+  console.log(`[FIN] eslabones=${cascadeLevel} C=${cellIdx} top=${getTopColor(cellIdx)?COLORS[getTopColor(cellIdx)].n:'-'} countTopColor=${countTopColor(cellIdx)}`);
 
   // Advance to next player
   G.curP++;
@@ -784,6 +808,84 @@ function removeTopColor(cellIdx){
   return removed;
 }
 
+// ============ T1: MEJOR CADENA (computeBestChain) ============
+// Función pura: simula en profundidad (<=6) las secuencias de merge posibles y
+// devuelve la secuencia cuyo ESTADO FINAL maximiza hex contiguos del mismo color
+// apilados en una torre (objetivo: construir hacia THRESHOLD=10 para destruir).
+// Permite pasos intermedios donde un hex/pila suba TEMPORALMENTE a la torre más
+// alta. La simulación replica EXACTAMENTE la mecánica de placeStack: cada paso
+// mueve el run contiguo del tope del color desde las fuentes hacia el candidato.
+function computeBestChain(){
+  const MAXD=6;
+  const stacks=G.board.map(c=>[...c.stack]);
+  let nodes=0,bestSeq=null,bestScore=-Infinity;
+  const topOf=st=>st.length?st[st.length-1]:null;
+  const runOf=st=>{
+    if(!st.length)return 0;
+    const t=st[st.length-1];let n=0;
+    for(let i=st.length-1;i>=0&&st[i]===t;i--)n++;
+    return n;
+  };
+  // Grupos BFS de celdas con el MISMO color de tope (tamaño >=2)
+  function groupsOf(st){
+    const groups=[],seen=new Set();
+    for(let i=0;i<19;i++){
+      if(seen.has(i))continue;
+      const t=topOf(st[i]);
+      if(!t)continue;
+      const comp=[i];seen.add(i);
+      const q=[i];
+      while(q.length){
+        const ci=q.pop();
+        for(const ni of ADJ[ci]){
+          if(!seen.has(ni)&&topOf(st[ni])===t){seen.add(ni);comp.push(ni);q.push(ni)}
+        }
+      }
+      if(comp.length>=2)groups.push(comp);
+    }
+    groups.sort((a,b)=>b.length-a.length);
+    return groups.slice(0,8); // branch factor acotado: los 8 grupos más grandes
+  }
+  function applyMove(st,group,target){
+    const next=st.map(s=>[...s]); // copia profunda por rama
+    for(const gi of group){
+      if(gi===target)continue;
+      const n=runOf(next[gi]);
+      for(let z=0;z<n;z++)next[target].push(next[gi].pop());
+    }
+    return next;
+  }
+  // Score del ESTADO FINAL (hoja): maximiza la torre contigua más alta
+  function evalState(st,depth){
+    const runs=[];
+    for(let i=0;i<19;i++){const r=runOf(st[i]);if(r>0)runs.push(r)}
+    runs.sort((a,b)=>b-a);
+    const r1=runs[0]||0,r2=runs[1]||0,r3=runs[2]||0;
+    return r1*1000+r2*100+r3*10+depth*10; // +profundidad: cadenas más largas
+  }
+  function dfs(st,depth,moves){
+    if(++nodes>20000)return;
+    const sc=evalState(st,depth);
+    if(sc>bestScore){bestScore=sc;bestSeq=moves.slice()}
+    if(depth>=MAXD)return;
+    const groups=groupsOf(st);
+    for(const g of groups){
+      const color=topOf(st[g[0]]);
+      for(const t of g){ // cada celda del grupo como candidato target
+        moves.push({color:color,source:g.filter(x=>x!==t),target:t});
+        dfs(applyMove(st,g,t),depth+1,moves);
+        moves.pop();
+        if(nodes>20000)return;
+      }
+    }
+  }
+  dfs(stacks,0,[]);
+  if(bestSeq&&bestSeq.length){
+    console.log('[CHAIN] plan='+bestSeq.map((m,i)=>i+1+':'+COLORS[m.color].n+'->'+m.target+'['+m.source.join('')+']').join(' | '));
+  }
+  return bestSeq||[];
+}
+
 function highlightCell(cellIdx,cls){
   const el=document.querySelector(`.hex-cell[data-ci="${cellIdx}"]`);
   if(el){el.classList.add(cls);setTimeout(()=>el.classList.remove(cls),800)}
@@ -793,6 +895,34 @@ function shakeScreen(){
   const board=document.getElementById('hexBoard');
   board.classList.add('shake');
   setTimeout(()=>board.classList.remove('shake'),300);
+}
+
+function flyHexes(sourceIdxs,targetIdx,color,runs){
+  // T2: los hex del run vuelan REALMENTE desde cada celda fuente al destino
+  const targetEl=document.querySelector(`.hex-cell[data-ci="${targetIdx}"]`);
+  if(!targetEl)return;
+  const tr=targetEl.getBoundingClientRect();
+  const tx=tr.left+tr.width/2,ty=tr.top+tr.height/2;
+  const col=COLORS[color].c;
+  for(const si of sourceIdxs){
+    const srcEl=document.querySelector(`.hex-cell[data-ci="${si}"]`);
+    if(!srcEl)continue;
+    const sr=srcEl.getBoundingClientRect();
+    const sx=sr.left+sr.width/2,sy=sr.top+sr.height/2;
+    const n=Math.min(2,(runs&&runs[si])||1); // máximo 2 clones por fuente
+    for(let k=0;k<n;k++){
+      const hx=document.createElement('div');
+      hx.className='stack-hex'; // hereda la forma de hexágono y var(--hc)
+      hx.style.cssText=`position:fixed;left:${sx-19}px;top:${sy-17}px;width:38px;height:34px;margin:0;z-index:100;pointer-events:none;transition:none;--hc:${col}`;
+      document.body.appendChild(hx);
+      const dx=tx-sx,dy=ty-sy;
+      setTimeout(()=>{
+        hx.style.transition='transform .6s cubic-bezier(.25,.46,.45,.94)';
+        hx.style.transform=`translate(${dx+6*k}px,${dy-4*k}px)`;
+      },k*60);
+      setTimeout(()=>hx.remove(),760+k*60);
+    }
+  }
 }
 
 function showMergeOverlays(sourceIdxs,targetIdx,color){
