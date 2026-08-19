@@ -175,6 +175,8 @@ text-shadow:0 0 20px rgba(0,0,0,.9),0 0 30px var(--accent),0 0 60px var(--accent
 
 /* POOL */
 .pool-wrap{display:flex;justify-content:center;gap:12px;margin:0 0 8px;flex-wrap:wrap}
+/* VERSION FOOTER */
+.ver{font-size:.7em;color:#9AA3B5;text-align:center;margin-top:16px;opacity:.75;letter-spacing:.4px}
 .pool-stack{background:linear-gradient(180deg,#1E2636,#141A26);border-radius:14px;padding:10px 14px;cursor:pointer;transition:all .3s cubic-bezier(.4,0,.2,1);
 border:2px solid var(--borde-neon);box-shadow:0 0 8px rgba(0,168,255,.22),inset 0 0 12px rgba(0,0,0,.4);min-width:60px;text-align:center;position:relative;overflow:hidden}
 .pool-stack::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,168,255,.1),transparent 60%);opacity:0;transition:opacity .3s}
@@ -318,6 +320,7 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
     <button class="btn btn-s" onclick="startTut()">📖 Tutorial</button>
     <button class="btn btn-s" onclick="showRules()">📜 Reglas</button>
   </div>
+  <div class="ver">v<span class="verNum"></span></div>
 </div>
 
 <!-- GAME -->
@@ -342,6 +345,7 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
   </div>
   <div class="pool-wrap" id="poolWrap"></div>
   <div class="msg" id="msg">Preparando...</div>
+  <div class="ver">v<span class="verNum"></span></div>
 </div>
 
 <!-- END -->
@@ -349,6 +353,7 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
   <h1>🏆 ¡Fin del Juego!</h1>
   <div id="endRank"></div>
   <div class="msg" id="shareOk" style="display:none"></div>
+  <div class="ver">v<span class="verNum"></span></div>
   <div class="bg end-acts">
     <button class="btn btn-p" onclick="startG()">🔄 Repetir</button>
     <button class="btn btn-cy" onclick="showS('menu')">🏠 Menú</button>
@@ -419,6 +424,7 @@ const ADJ = [
 
 const THRESHOLD = 10;
 const CASCADE_STEP_MS = 1600; // pausa visible por eslabón de cascada
+const GAME_VERSION='v1.0';
 
 // ===================== GAME STATE =====================
 let G = {
@@ -1324,7 +1330,8 @@ function showTut(){
 function tutNext(){tutS++;if(tutS>=TUT.length){document.getElementById('tutBg').classList.remove('show');document.getElementById('tutBox').classList.remove('show');startG()}else showTut()}
 
 // ===================== UI =====================
-function showS(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function setVersion(){document.querySelectorAll('.verNum').forEach(e=>e.textContent=GAME_VERSION.replace('v',''))}
+function showS(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');setVersion()}
 function setMsg(m){document.getElementById('msg').textContent=m}
 function showRules(){document.getElementById('rulesM').classList.add('show')}
 function hideRules(){document.getElementById('rulesM').classList.remove('show')}
