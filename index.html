@@ -599,9 +599,7 @@ async function placeStack(cellIdx,poolIdx){
   let mergeTarget=cellIdx; // Track which cell last RECEIVED hexagons for cascade tie-breaking
 
   while(merged){
-    // CHAIN (T1): mejor cadena simulada para el estado actual (profundidad <=6)
-    const chainPlan=computeBestChain();
-    let chainCursor=0;
+
     merged=false;
     // Track which cells changed this iteration — include mergeTarget (the cell that just grew)
     const affected=new Set([mergeTarget]);
@@ -642,65 +640,8 @@ async function placeStack(cellIdx,poolIdx){
       // Only merge if group has 2+ cells
       if(group.length<=1)continue;
 
-      let targetIdx=group[0];
-      // CHAIN (T1): consumir el primer paso del plan del mismo color cuyo
-      // grupo solape el grupo actual (fallback R2 si no hay paso que encaje)
-      let planStep=null;
-      if(chainPlan){
-        for(let c0=chainCursor;c0<chainPlan.length;c0++){
-          const stp=chainPlan[c0];
-          if(stp.color===color&&stp.source.some(si=>group.includes(si))){
-            planStep=stp;chainCursor=c0+1;break;
-          }
-        }
-      }
-      if(planStep){
-        targetIdx=planStep.target;
-        console.log(`[CHAIN] eslabón=${cascadeLevel} color=${COLORS[color].n} grupo=[${group.join(',')}] -> target=${targetIdx} (plan)`);
-      }else{
-      // R2 (FIX): la heurística vieja siempre daba 0 — el BFS del grupo ya absorbía a
-      // todos los vecinos del mismo color. Ahora se SIMULA la fusión en cada candidato
-      // (tops post-merge: las fuentes pierden su color, el candidato lo conserva) y se
-      // cuentan las aristas del mismo color que quedan tocando celdas cambiadas:
-      // más aristas = más encadenado disponible para la siguiente iteración.
-      const chains={};
-      let bestChain=-1;
-      for(const gi of group){
-        const post=new Array(19);
-        for(let i=0;i<19;i++){
-          const s=G.board[i].stack;
-          post[i]=s.length>0?s[s.length-1]:null;
-        }
-        for(const g2 of group){
-          if(g2===gi)continue;
-          const rem=G.board[g2].stack.filter(h=>h!==color);
-          post[g2]=rem.length>0?rem[rem.length-1]:null;
-        }
-        let chain=0;
-        const seen=new Set();
-        for(const g2 of group){
-          if(post[g2]===null)continue;
-          for(const ni of ADJ[g2]){
-            const k=g2<ni?g2+'-'+ni:ni+'-'+g2;
-            if(seen.has(k))continue;
-            seen.add(k);
-            const nt=post[ni];
-            if(nt!==null&&nt===post[g2])chain++;
-          }
-        }
-        chains[gi]=chain;
-        const sz=G.board[gi].stack.length;
-        if(bestChain<0||chain>bestChain||
-          (chain===bestChain&&(sz<G.board[targetIdx].stack.length||
-          (sz===G.board[targetIdx].stack.length&&gi===mergeTarget)))){
-          bestChain=chain;targetIdx=gi;
-        }
-      }
-      if(bestChain>0){
-        console.log(`[R2] encadenado: candidatos [${group}] aristasNuevas=[${group.map(g=>chains[g]).join(',')}] -> target=${targetIdx} (${bestChain} enlaces)`);
-      }
-      }
-
+      if(!group.includes(mergeTarget))continue;
+      let targetIdx=mergeTarget;
       // Merge: move all hexagons of this color from smaller stacks INTO targetIdx
       let anyMoved=false;
       // T2: registrar cuántos hex del run volaron por fuente (para animación)
@@ -808,83 +749,7 @@ function removeTopColor(cellIdx){
   return removed;
 }
 
-// ============ T1: MEJOR CADENA (computeBestChain) ============
-// Función pura: simula en profundidad (<=6) las secuencias de merge posibles y
-// devuelve la secuencia cuyo ESTADO FINAL maximiza hex contiguos del mismo color
-// apilados en una torre (objetivo: construir hacia THRESHOLD=10 para destruir).
-// Permite pasos intermedios donde un hex/pila suba TEMPORALMENTE a la torre más
-// alta. La simulación replica EXACTAMENTE la mecánica de placeStack: cada paso
-// mueve el run contiguo del tope del color desde las fuentes hacia el candidato.
-function computeBestChain(){
-  const MAXD=6;
-  const stacks=G.board.map(c=>[...c.stack]);
-  let nodes=0,bestSeq=null,bestScore=-Infinity;
-  const topOf=st=>st.length?st[st.length-1]:null;
-  const runOf=st=>{
-    if(!st.length)return 0;
-    const t=st[st.length-1];let n=0;
-    for(let i=st.length-1;i>=0&&st[i]===t;i--)n++;
-    return n;
-  };
-  // Grupos BFS de celdas con el MISMO color de tope (tamaño >=2)
-  function groupsOf(st){
-    const groups=[],seen=new Set();
-    for(let i=0;i<19;i++){
-      if(seen.has(i))continue;
-      const t=topOf(st[i]);
-      if(!t)continue;
-      const comp=[i];seen.add(i);
-      const q=[i];
-      while(q.length){
-        const ci=q.pop();
-        for(const ni of ADJ[ci]){
-          if(!seen.has(ni)&&topOf(st[ni])===t){seen.add(ni);comp.push(ni);q.push(ni)}
-        }
-      }
-      if(comp.length>=2)groups.push(comp);
-    }
-    groups.sort((a,b)=>b.length-a.length);
-    return groups.slice(0,8); // branch factor acotado: los 8 grupos más grandes
-  }
-  function applyMove(st,group,target){
-    const next=st.map(s=>[...s]); // copia profunda por rama
-    for(const gi of group){
-      if(gi===target)continue;
-      const n=runOf(next[gi]);
-      for(let z=0;z<n;z++)next[target].push(next[gi].pop());
-    }
-    return next;
-  }
-  // Score del ESTADO FINAL (hoja): maximiza la torre contigua más alta
-  function evalState(st,depth){
-    const runs=[];
-    for(let i=0;i<19;i++){const r=runOf(st[i]);if(r>0)runs.push(r)}
-    runs.sort((a,b)=>b-a);
-    const r1=runs[0]||0,r2=runs[1]||0,r3=runs[2]||0;
-    return r1*1000+r2*100+r3*10+depth*10; // +profundidad: cadenas más largas
-  }
-  function dfs(st,depth,moves){
-    if(++nodes>20000)return;
-    const sc=evalState(st,depth);
-    if(sc>bestScore){bestScore=sc;bestSeq=moves.slice()}
-    if(depth>=MAXD)return;
-    const groups=groupsOf(st);
-    for(const g of groups){
-      const color=topOf(st[g[0]]);
-      for(const t of g){ // cada celda del grupo como candidato target
-        moves.push({color:color,source:g.filter(x=>x!==t),target:t});
-        dfs(applyMove(st,g,t),depth+1,moves);
-        moves.pop();
-        if(nodes>20000)return;
-      }
-    }
-  }
-  dfs(stacks,0,[]);
-  if(bestSeq&&bestSeq.length){
-    console.log('[CHAIN] plan='+bestSeq.map((m,i)=>i+1+':'+COLORS[m.color].n+'->'+m.target+'['+m.source.join('')+']').join(' | '));
-  }
-  return bestSeq||[];
-}
+
 
 function highlightCell(cellIdx,cls){
   const el=document.querySelector(`.hex-cell[data-ci="${cellIdx}"]`);
