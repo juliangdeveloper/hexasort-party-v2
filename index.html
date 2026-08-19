@@ -115,7 +115,7 @@ display:flex;flex-direction:column;align-items:center;justify-content:center;gap
 .pb-chip .pb-pts{margin-left:4px;font-size:.9em;font-family:'Baloo 2'}
 
 /* HEX BOARD */
-.board-wrap{display:flex;justify-content:center;margin:0;position:relative}
+.board-wrap{display:flex;justify-content:center;margin:20px 0 0;position:relative}
 .hex-board{position:relative;width:340px;height:232px;filter:drop-shadow(0 0 18px rgba(0,168,255,.16))}
 .hex-row{display:flex;justify-content:center;gap:4px;margin-bottom:-12px}
 .hex-cell{width:64px;height:56px;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;
@@ -127,6 +127,13 @@ clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
 background:var(--cell-bg,#111824);
 border:2px solid var(--cell-bd,var(--borde-neon));
 box-shadow:inset 0 0 10px rgba(0,168,255,.18),inset 0 -3px 6px rgba(0,0,0,.35)}
+/* Canto/grosor isométrico: un segundo hex desplazado hacia abajo, solo visible como
+   espesor inferior del bloque (consistente con el volumen 3D de las pilas). */
+.hex-cell::after{content:'';position:absolute;inset:0;z-index:-2;pointer-events:none;
+transform:translateY(5px);
+clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.75) 100%)}
+.hex-cell.empty::after{background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,20,40,.85) 100%);filter:drop-shadow(0 3px 4px rgba(0,168,255,.25))}
 .hex-cell:hover:not(.locked){transform:scale(1.12);z-index:2}
 .hex-cell:hover:not(.locked)::before{--cell-bd:var(--accent);filter:brightness(1.3)}
 .hex-cell.locked{cursor:default}
@@ -255,6 +262,7 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
   .turn-info{font-size:.72em}
   .round-badge{font-size:.85em;padding:4px 10px}
   .hex-cell{width:58px;height:50px}
+  .board-wrap{margin-top:16px}
   .hex-board{width:100%;max-width:366px;height:194px}
   .hex-row{gap:3px;margin-bottom:-14px}
   .pool-wrap{flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:6px}
@@ -834,13 +842,26 @@ function computeBestChain(){
     }
     return next;
   }
-  // Score del ESTADO FINAL (hoja): maximiza la torre contigua más alta
+  // Score del ESTADO FINAL (hoja): consolida TODOS los grupos del mismo color de
+  // tope (size>=2) antes de inflar ninguna torre; 0 grupos activos ideal.
+  function countActiveGroups(st){
+    let g=0;const seen=new Set();
+    for(let i=0;i<19;i++){
+      if(seen.has(i))continue;
+      const t=topOf(st[i]);if(!t)continue;
+      const comp=[i];seen.add(i);const q=[i];
+      while(q.length){const ci=q.pop();for(const ni of ADJ[ci]){if(!seen.has(ni)&&topOf(st[ni])===t){seen.add(ni);comp.push(ni);q.push(ni)}}}
+      if(comp.length>=2)g++;
+    }
+    return g;
+  }
   function evalState(st,depth){
     const runs=[];
     for(let i=0;i<19;i++){const r=runOf(st[i]);if(r>0)runs.push(r)}
     runs.sort((a,b)=>b-a);
     const r1=runs[0]||0,r2=runs[1]||0,r3=runs[2]||0;
-    return r1*1000+r2*100+r3*10+depth*10; // +profundidad: cadenas más largas
+    const groups=countActiveGroups(st);
+    return -groups*1000+(r1*10+r2*5+r3)+depth*5;
   }
   function dfs(st,depth,moves){
     if(++nodes>20000)return;
