@@ -138,15 +138,15 @@ box-shadow:inset 0 0 10px rgba(0,168,255,.18),inset 0 -3px 6px rgba(0,0,0,.35)}
 .hex-cell.locked{cursor:default}
 .hex-cell.empty{--cell-bg:linear-gradient(180deg,#131C2B,#0E141F);--cell-bd:var(--borde-neon)}
 .hex-cell.empty::before{box-shadow:inset 0 0 12px rgba(0,168,255,.15),0 0 10px rgba(0,168,255,.4),inset 0 -3px 6px rgba(0,0,0,.35)}
-.hex-cell .stack-vis{display:flex;flex-direction:column-reverse;align-items:center;pointer-events:none;padding-top:7px}
-.hex-cell .stack-hex{width:30px;height:30px;position:relative;flex:none;z-index:1;margin-top:-19px;
+.hex-cell .stack-vis{display:flex;flex-direction:column-reverse;align-items:center;pointer-events:none;padding-top:6px}
+.hex-cell .stack-hex{width:57px;height:50px;position:relative;flex:none;z-index:1;margin-top:-30px;
 clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
 background:linear-gradient(180deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,.12) 30%,rgba(0,0,0,.1) 55%,rgba(0,0,0,.4) 100%),var(--hc);
 filter:saturate(1.25) brightness(1.08);transition:all .8s cubic-bezier(.4,0,.2,1);
 box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.3),0 0 9px var(--hc),0 2px 4px rgba(0,0,0,.5)}
 .hex-cell .stack-hex::before{content:'';position:absolute;inset:0;pointer-events:none;
 background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,0) 42%);opacity:.55}
-.hex-cell .stack-count{position:absolute;top:7px;right:3px;z-index:6;font-size:.6em;font-weight:800;font-family:'Baloo 2';color:#0B0F1A;
+.hex-cell .stack-count{position:absolute;top:1px;right:2px;z-index:6;font-size:.6em;font-weight:800;font-family:'Baloo 2';color:#0B0F1A;
 background:rgba(255,255,255,.92);padding:0 4px;border-radius:6px;line-height:1.45;box-shadow:0 1px 3px rgba(0,0,0,.45)}
 .hex-cell.clearing{animation:clearPop .8s ease-out}
 @keyframes clearPop{0%{transform:scale(1);opacity:1}30%{transform:scale(1.6);opacity:1;filter:brightness(3)}60%{transform:scale(1.3);opacity:.8}100%{transform:scale(0);opacity:0}}
@@ -265,15 +265,17 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
   .ms h3{margin:-12px -12px 10px;padding:9px 12px;border-radius:12px 12px 0 0}
   .turn-info{font-size:.72em}
   .round-badge{font-size:.85em;padding:4px 10px}
-  .hex-cell{width:56px;height:48px}
-  .hex-board{width:100%;max-width:340px;height:300px}
-  .pool-wrap{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px}
-  .pool-stack{min-width:0;width:auto;padding:6px 8px}
-  .pool-stack .ps-stack-hex{width:24px;height:24px;margin-top:-14px}
+  .hex-cell{width:58px;height:50px}
+  .hex-board{width:100%;max-width:366px;height:340px}
+  .hex-row{gap:3px;margin-bottom:-14px}
+  .pool-wrap{flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:6px}
+  .pool-stack{min-width:0;width:auto;padding:5px 6px}
+  .pool-stack .ps-stack-hex{width:32px;height:32px;margin-top:-20px}
   .pool-stack .ps-hex{margin:3px 0 1px}
-  .pool-stack .ps-label{font-size:.6em;margin-top:1px}
+  .pool-stack .ps-label{font-size:.58em;margin-top:1px}
   .pool-stack:hover{transform:translateY(-2px) scale(1.02)}
-  .hex-cell .stack-hex{width:26px;height:26px;margin-top:-16px}
+  .hex-cell .stack-hex{width:50px;height:43px;margin-top:-26px}
+  .hex-cell .stack-count{font-size:.54em;top:0;right:1px}
   .btn{padding:14px 28px;font-size:1.05em;min-height:48px}
   .cbtn{width:48px;height:48px}
   .hex-cell:hover:not(.locked){transform:scale(1.08)}
@@ -636,15 +638,38 @@ async function placeStack(cellIdx,poolIdx){
       // Only merge if group has 2+ cells
       if(group.length<=1)continue;
 
-      // Find the cell with the most hexagons — that's the merge TARGET
-      // Ties: prefer mergeTarget (the cell that last received hexagons in this cascade)
       let targetIdx=group[0];
-      let maxSize=G.board[group[0]].stack.length;
-      for(let i=1;i<group.length;i++){
-        const sz=G.board[group[i]].stack.length;
-        if(sz>maxSize||(sz===maxSize&&group[i]===mergeTarget)){
-          maxSize=sz;
-          targetIdx=group[i];
+      // R2: prefer a candidate that, once merged, creates NEW same-colour adjacencies
+      // with non-group neighbours — that chains/cascades further even if not the lowest.
+      const cascadeTop={};
+      let cMax=-1;
+      for(const gi of group){
+        let cs=0;
+        for(const ni of ADJ[gi]){
+          if(group.indexOf(ni)>=0)continue;
+          if(G.board[ni].stack.length>0&&getTopColor(ni)===color)cs++;
+        }
+        cascadeTop[gi]=cs;
+        if(cs>cMax)cMax=cs;
+      }
+      if(cMax>0){
+        // R2 has a chaining candidate — among those with the most new adjacencies,
+        // prefer the lowest stack; tie → mergeTarget.
+        let best=null;
+        for(const gi of group){
+          if(cascadeTop[gi]!==cMax)continue;
+          if(best===null||G.board[gi].stack.length<G.board[best].stack.length||
+            (G.board[gi].stack.length===G.board[best].stack.length&&gi===mergeTarget))best=gi;
+        }
+        targetIdx=best;
+      }else{
+        // R1: no new adjacency → jump toward the LOWEST stack (min hexagons); tie → mergeTarget.
+        let minSize=G.board[group[0]].stack.length;
+        for(let i=1;i<group.length;i++){
+          const sz=G.board[group[i]].stack.length;
+          if(sz<minSize||(sz===minSize&&group[i]===mergeTarget)){
+            minSize=sz;targetIdx=group[i];
+          }
         }
       }
 
@@ -940,13 +965,13 @@ function evalPlacement(cellIdx,stack,aiType){
       for(const gi of group)processed.add(`${gi}-${color}`);
       if(group.length<=1)continue;
 
-      // Find target (largest stack, ties: prefer cellIdx)
+      // Find target: R1 direction — the LOWEST stack (min size), tie: prefer cellIdx
       let targetIdx=group[0];
-      let maxSize=vBoard[group[0]].size;
+      let minSize=vBoard[group[0]].size;
       for(let i=1;i<group.length;i++){
         const sz=vBoard[group[i]].size;
-        if(sz>maxSize||(sz===maxSize&&group[i]===cellIdx)){
-          maxSize=sz;
+        if(sz<minSize||(sz===minSize&&group[i]===cellIdx)){
+          minSize=sz;
           targetIdx=group[i];
         }
       }
