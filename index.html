@@ -139,7 +139,7 @@ box-shadow:inset 0 0 10px rgba(0,168,255,.18),inset 0 -3px 6px rgba(0,0,0,.35)}
 .hex-cell.empty{--cell-bg:linear-gradient(180deg,#131C2B,#0E141F);--cell-bd:var(--borde-neon)}
 .hex-cell.empty::before{box-shadow:inset 0 0 12px rgba(0,168,255,.15),0 0 10px rgba(0,168,255,.4),inset 0 -3px 6px rgba(0,0,0,.35)}
 .hex-cell .stack-vis{position:absolute;left:50%;bottom:2px;transform:translateX(-50%);display:flex;flex-direction:column-reverse;align-items:center;pointer-events:none;padding:0}
-.hex-cell .stack-hex{width:28px;height:38px;position:relative;flex:none;z-index:1;margin-top:-27px;
+.hex-cell .stack-hex{width:36px;height:50px;position:relative;flex:none;z-index:1;margin-top:-36px;
 clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
 background:linear-gradient(180deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,.12) 30%,rgba(0,0,0,.1) 55%,rgba(0,0,0,.4) 100%),var(--hc);
 filter:saturate(1.25) brightness(1.08);transition:all .8s cubic-bezier(.4,0,.2,1);
@@ -184,7 +184,7 @@ border:2px solid var(--borde-neon);box-shadow:0 0 8px rgba(0,168,255,.22),inset 
 background:radial-gradient(circle at 35% 30%,#FFE082,#F5A623 60%,#C77D12);color:#2A2010;font-size:.9em;font-weight:900;border:1px solid #FFD700;box-shadow:0 0 10px rgba(255,215,0,.7)}
 .pool-stack.used{opacity:.2;pointer-events:none}
 .pool-stack .ps-hex{display:flex;flex-direction:column-reverse;align-items:center;margin:6px 0 2px}
-.pool-stack .ps-stack-hex{width:20px;height:30px;position:relative;flex:none;z-index:1;margin-top:-20px;
+.pool-stack .ps-stack-hex{width:26px;height:38px;position:relative;flex:none;z-index:1;margin-top:-24px;
 clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
 background:linear-gradient(180deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,.12) 30%,rgba(0,0,0,.1) 55%,rgba(0,0,0,.4) 100%),var(--hc);
 filter:saturate(1.25) brightness(1.08);
@@ -270,11 +270,11 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
   .hex-row{gap:3px;margin-bottom:-14px}
   .pool-wrap{flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:6px}
   .pool-stack{min-width:0;width:auto;padding:5px 6px}
-  .pool-stack .ps-stack-hex{width:16px;height:24px;margin-top:-15px}
+  .pool-stack .ps-stack-hex{width:20px;height:30px;margin-top:-18px}
   .pool-stack .ps-hex{margin:3px 0 1px}
   .pool-stack .ps-label{font-size:.58em;margin-top:1px}
   .pool-stack:hover{transform:translateY(-2px) scale(1.02)}
-  .hex-cell .stack-hex{width:25px;height:32px;margin-top:-22px}
+  .hex-cell .stack-hex{width:30px;height:42px;margin-top:-27px}
   .hex-cell .stack-count{font-size:.54em;top:0;right:1px}
   .btn{padding:14px 28px;font-size:1.05em;min-height:48px}
   .cbtn{width:48px;height:48px}
@@ -913,7 +913,7 @@ function flyHexes(sourceIdxs,targetIdx,color,runs){
     for(let k=0;k<n;k++){
       const hx=document.createElement('div');
       hx.className='stack-hex'; // hereda la forma de hexágono y var(--hc)
-      hx.style.cssText=`position:fixed;left:${sx-14}px;top:${sy-19}px;width:28px;height:38px;margin:0;z-index:100;pointer-events:none;transition:none;--hc:${col}`;
+      hx.style.cssText=`position:fixed;left:${sx-18}px;top:${sy-25}px;width:36px;height:50px;margin:0;z-index:100;pointer-events:none;transition:none;--hc:${col}`;
       document.body.appendChild(hx);
       const dx=tx-sx,dy=ty-sy;
       setTimeout(()=>{
