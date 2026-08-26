@@ -136,11 +136,18 @@ box-shadow:inset 0 0 10px rgba(0,168,255,.18),inset 0 -3px 6px rgba(0,0,0,.35)}
 .hex-cell.empty{--cell-bg:linear-gradient(180deg,#131C2B,#0E141F);--cell-bd:var(--borde-neon)}
 .hex-cell.empty::before{box-shadow:inset 0 0 12px rgba(0,168,255,.15),0 0 10px rgba(0,168,255,.4)}
 .hex-cell .stack-vis{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);display:flex;flex-direction:column-reverse;align-items:center;pointer-events:none;padding:0;z-index:2}
-.hex-cell .stack-hex{width:60px;height:50px;position:relative;flex:none;z-index:1;margin-top:-46px;
+.hex-cell .stack-hex{width:60px;height:50px;position:relative;flex:none;z-index:1;margin-top:-42px;
+background:transparent;transition:all .8s cubic-bezier(.4,0,.2,1);
+filter:
+  drop-shadow(0 0 0.75px #000)
+  drop-shadow(0 0 1.25px #000)
+  drop-shadow(0 1.5px 0 #000)
+  drop-shadow(0 -1px 0 #000)
+  drop-shadow(1.25px 0 0 #000)
+  drop-shadow(-1.25px 0 0 #000)}
+.hex-cell .stack-hex::before{content:'';display:block;width:100%;height:100%;
 clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-background:var(--hc);transition:all .8s cubic-bezier(.4,0,.2,1);
-box-shadow:0 0 8px var(--hc)}
-.hex-cell .stack-hex::before{display:none}
+background:var(--hc);box-shadow:0 0 8px var(--hc)}
 .hex-cell .stack-count{position:absolute;top:1px;right:2px;z-index:6;font-size:.6em;font-weight:800;font-family:'Baloo 2';color:#0B0F1A;
 background:rgba(255,255,255,.92);padding:0 4px;border-radius:6px;line-height:1.45;box-shadow:0 1px 3px rgba(0,0,0,.45)}
 .hex-cell.clearing{animation:clearPop .8s ease-out}
@@ -181,11 +188,18 @@ border:2px solid var(--borde-neon);box-shadow:0 0 8px rgba(0,168,255,.22),inset 
 background:radial-gradient(circle at 35% 30%,#FFE082,#F5A623 60%,#C77D12);color:#2A2010;font-size:.9em;font-weight:900;border:1px solid #FFD700;box-shadow:0 0 10px rgba(255,215,0,.7)}
 .pool-stack.used{opacity:.2;pointer-events:none}
 .pool-stack .ps-hex{display:flex;flex-direction:column-reverse;align-items:center;margin:6px 0 2px;position:relative;z-index:2}
-.pool-stack .ps-stack-hex{width:42px;height:35px;position:relative;flex:none;z-index:2;margin-top:-32px;
+.pool-stack .ps-stack-hex{width:42px;height:35px;position:relative;flex:none;z-index:2;margin-top:-27px;
+background:transparent;
+filter:
+  drop-shadow(0 0 0.75px #000)
+  drop-shadow(0 0 1.25px #000)
+  drop-shadow(0 1.5px 0 #000)
+  drop-shadow(0 -1px 0 #000)
+  drop-shadow(1.25px 0 0 #000)
+  drop-shadow(-1.25px 0 0 #000)}
+.pool-stack .ps-stack-hex::before{content:'';display:block;width:100%;height:100%;
 clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-background:var(--hc);
-box-shadow:0 0 8px var(--hc)}
-.pool-stack .ps-stack-hex::before{display:none}
+background:var(--hc);box-shadow:0 0 8px var(--hc)}
 .pool-stack .ps-label{font-size:.7em;color:var(--dim);margin-top:3px;font-weight:700}
 
 /* SCORE POPUP */
@@ -261,11 +275,11 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
   .hex-row{gap:0;margin-bottom:-13px}
   .pool-wrap{flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:6px}
   .pool-stack{min-width:0;width:auto;padding:5px 6px}
-  .pool-stack .ps-stack-hex{width:36px;height:30px;margin-top:-28px}
+  .pool-stack .ps-stack-hex{width:36px;height:30px;margin-top:-23px}
   .pool-stack .ps-hex{margin:3px 0 1px}
   .pool-stack .ps-label{font-size:.58em;margin-top:1px}
   .pool-stack:hover{transform:translateY(-2px) scale(1.02)}
-  .hex-cell .stack-hex{width:54px;height:44px;margin-top:-40px}
+  .hex-cell .stack-hex{width:54px;height:44px;margin-top:-36px}
   .hex-cell .stack-count{font-size:.54em;top:0;right:1px}
   .btn{padding:14px 28px;font-size:1.05em;min-height:48px}
   .cbtn{width:48px;height:48px}
@@ -416,7 +430,7 @@ const ADJ = [
 
 const THRESHOLD = 10;
 const CASCADE_STEP_MS = 1600; // pausa visible por eslabón de cascada
-const GAME_VERSION='v1.2';
+const GAME_VERSION='v1.3';
 
 // ===================== GAME STATE =====================
 let G = {
