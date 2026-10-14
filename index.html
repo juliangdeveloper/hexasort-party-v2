@@ -430,7 +430,7 @@ const ADJ = [
 
 const THRESHOLD = 10;
 const CASCADE_STEP_MS = 1600; // pausa visible por eslabón de cascada
-const GAME_VERSION='v1.3';
+const GAME_VERSION='v1.3.1';
 
 // ===================== GAME STATE =====================
 let G = {
@@ -1085,7 +1085,6 @@ function evalPlacement(cellIdx,stack,aiType){
   let cascadeScore=0;
   let cascadeLevel=0;
   let simChanged=true;
-  const virtualClears=new Set();
 
   while(simChanged){
     simChanged=false;
@@ -1197,13 +1196,10 @@ function endGame(){
   showConfetti();
   const sorted=[...G.players].sort((a,b)=>{
     if(b.score!==a.score)return b.score-a.score;
-    // Tiebreak: fewer hexagons on board
-    const aHex=G.board.reduce((s,c)=>s+c.stack.length,0);
-    return 0; // same board
+    return 0; // shared board: no tiebreak
   });
   const medals=['🥇','🥈','🥉','4️⃣'];
   document.getElementById('endRank').innerHTML=sorted.map((p,i)=>{
-    const origIdx=G.players.indexOf(p);
     return`<div class="end-rank ${i===0?'w':''}">
     <span class="er-pos">${medals[i]}</span>
     <span class="er-name" style="color:${p.color}">${p.name}</span>
