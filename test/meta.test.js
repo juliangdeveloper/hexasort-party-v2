@@ -10,10 +10,11 @@ const {
   backfillMeta,
   bumpProgress,
   flushProgressNow,
+  bindMetaFlush,
   setProgressSandbox
 } = require('../progress.js');
 
-const VERSION = '1.4.1';
+const VERSION = '1.4.2';
 
 function mockStorage(seed) {
   const map = new Map();
@@ -214,7 +215,7 @@ test('metaUpdate keeps hitos, unions logros, and posts to the parent', () => {
   ];
   try {
     withNow('2026-10-23T18:00:00.000Z', () => {
-      metaUpdate('hexasort-party-v2', 'v1.4.1', {
+      metaUpdate('hexasort-party-v2', 'v1.4.2', {
         stats: { games_finished: 2, best_score: NaN, rounds_played: 3, label: 'no', inf: Infinity },
         logros: ['score_100', 'first_game', 'score_100'],
         declared
@@ -307,7 +308,7 @@ test('monotonic stats keep the greater value', () => {
   assert.equal('extra_count' in rec.stats, false);
 });
 
-test('at most one write per second, including backfill and flush', () => {
+test('normal writes stay at one per second, including backfill', () => {
   quietPage();
   const messages = [];
   global.window = {
@@ -337,11 +338,10 @@ test('at most one write per second, including backfill and flush', () => {
     bumpProgress({ placements: 1, merges: 1 });
     assert.equal(timers.length, 1);
     assert.ok(timers[0].ms > 0 && timers[0].ms <= 1000);
-    flushProgressNow();
     assert.equal(writes.length, 1);
     assert.equal(messages.length, 1);
     Date.now = () => origNow.call(Date) + 2000;
-    flushProgressNow();
+    timers[0].fn();
     assert.equal(writes.length, 2);
     assert.ok(writes[1].t - writes[0].t >= 1000);
     assert.equal(messages.length, 2);
@@ -349,12 +349,71 @@ test('at most one write per second, including backfill and flush', () => {
     assert.equal(rec.stats.placements, 2);
     assert.equal(rec.stats.merges, 1);
     assert.equal(rec.version, VERSION);
-    flushProgressNow();
-    assert.equal(writes.length, 2);
-    assert.equal(messages.length, 2);
   } finally {
     global.setTimeout = origTimeout;
     Date.now = origNow;
+    delete global.window;
+    global.location = { search: '', origin: 'https://juliangdeveloper.github.io' };
+  }
+});
+
+test('pagehide and hidden visibility flush a pending change immediately', () => {
+  quietPage();
+  const messages = [];
+  global.window = {
+    parent: { postMessage(data, origin) { messages.push({ data, origin }); } }
+  };
+  const listeners = {};
+  function addEventListener(type, fn) {
+    if (!listeners[type]) listeners[type] = [];
+    listeners[type].push(fn);
+  }
+  function dispatch(type) {
+    (listeners[type] || []).forEach(fn => fn());
+  }
+  global.addEventListener = addEventListener;
+  global.document = { visibilityState: 'visible', addEventListener };
+  bindMetaFlush();
+  mockStorage({});
+  const writes = [];
+  const origSet = localStorage.setItem;
+  localStorage.setItem = function (k, v) {
+    writes.push({ k, t: Date.now() });
+    return origSet.call(localStorage, k, v);
+  };
+  const origTimeout = global.setTimeout;
+  global.setTimeout = (fn, ms) => ({ fn, ms });
+  try {
+    loadProgress();
+    backfillMeta(VERSION);
+    assert.equal(writes.length, 1);
+    bumpProgress({ placements: 1 });
+    assert.equal(writes.length, 1);
+    dispatch('pagehide');
+    assert.equal(writes.length, 2);
+    assert.equal(messages.length, 2);
+    assert.equal(JSON.parse(localStorage.getItem(META_KEY)).stats.placements, 1);
+    assert.equal(messages[1].data.type, 'meta');
+    dispatch('pagehide');
+    assert.equal(writes.length, 2);
+    assert.equal(messages.length, 2);
+
+    bumpProgress({ merges: 1 });
+    global.document.visibilityState = 'visible';
+    dispatch('visibilitychange');
+    assert.equal(writes.length, 2);
+    global.document.visibilityState = 'hidden';
+    dispatch('visibilitychange');
+    assert.equal(writes.length, 3);
+    assert.equal(messages.length, 3);
+    assert.equal(JSON.parse(localStorage.getItem(META_KEY)).stats.merges, 1);
+    dispatch('visibilitychange');
+    assert.equal(writes.length, 3);
+    assert.equal(messages.length, 3);
+  } finally {
+    global.setTimeout = origTimeout;
+    delete global.addEventListener;
+    delete global.document;
     delete global.window;
     global.location = { search: '', origin: 'https://juliangdeveloper.github.io' };
   }

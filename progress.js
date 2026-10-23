@@ -190,7 +190,6 @@
     try {
       if (blocked()) return;
       if (!metaDirty) return;
-      if (Date.now() - metaLastWrite < META_DEBOUNCE_MS) return;
       if (metaTimer != null) {
         try { clearTimeout(metaTimer); } catch (e) {}
         metaTimer = null;
@@ -198,6 +197,28 @@
       metaDirty = false;
       metaLastWrite = Date.now();
       writeMeta();
+    } catch (e) {}
+  }
+
+  function onVisibilityChange() {
+    try {
+      var doc = globalThis.document;
+      if (doc && doc.visibilityState === 'hidden') flushProgressNow();
+    } catch (e) {}
+  }
+
+  function bindMetaFlush() {
+    try {
+      if (typeof globalThis.addEventListener === 'function') {
+        globalThis.addEventListener('pagehide', function () { flushProgressNow(); });
+      }
+    } catch (e) {}
+    try {
+      var doc = globalThis.document;
+      var visTarget = doc && typeof doc.addEventListener === 'function' ? doc : globalThis;
+      if (typeof visTarget.addEventListener === 'function') {
+        visTarget.addEventListener('visibilitychange', onVisibilityChange);
+      }
     } catch (e) {}
   }
 
@@ -255,11 +276,7 @@
     } catch (e) {}
   }
 
-  try {
-    if (typeof globalThis.addEventListener === 'function') {
-      globalThis.addEventListener('pagehide', function () { flushProgressNow(); });
-    }
-  } catch (e) {}
+  bindMetaFlush();
 
   return {
     SLUG: SLUG,
@@ -272,6 +289,7 @@
     bumpProgress: bumpProgress,
     backfillMeta: backfillMeta,
     flushProgressNow: flushProgressNow,
+    bindMetaFlush: bindMetaFlush,
     setProgressSandbox: setProgressSandbox
   };
 });
