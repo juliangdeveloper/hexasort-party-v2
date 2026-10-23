@@ -394,6 +394,8 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
 <div class="tut-box" id="tutBox"><p id="tutTx"></p><button class="btn btn-p btn-sm" id="tutBtn" onclick="tutNext()">Siguiente</button></div>
 
 
+<script src="meta.js"></script>
+<script src="progress.js"></script>
 <script>
 // ===================== CONSTANTS =====================
 const COLORS = {
@@ -430,7 +432,7 @@ const ADJ = [
 
 const THRESHOLD = 10;
 const CASCADE_STEP_MS = 1600; // pausa visible por eslabón de cascada
-const GAME_VERSION='v1.3.2';
+const GAME_VERSION='1.4.2';
 
 // ===================== GAME STATE =====================
 let G = {
@@ -458,6 +460,7 @@ function getDur(){return parseInt(document.querySelector('input[name=rnd]:checke
 
 // ===================== START =====================
 function startG(tut=false){
+  if(typeof setProgressSandbox==='function')setProgressSandbox(false);
   const n=getPC();
   G.players=[];G.over=false;G.animating=false;
   for(let i=0;i<n;i++){
@@ -576,8 +579,11 @@ function clickCell(ci){
   placeStack(ci,G.selectedPool);
 }
 
+function note(partial){try{if(typeof bumpProgress==='function')bumpProgress(partial)}catch(e){}}
+
 async function placeStack(cellIdx,poolIdx){
   G.animating=true;
+  note({placements:1});
   const stack=G.pool[poolIdx];
   const layers=stack.layers;
   const height=stack.height;
@@ -724,6 +730,7 @@ async function placeStack(cellIdx,poolIdx){
         merged=true;
         mergeTarget=targetIdx; // Track the receiving cell for next cascade iteration
         cascadeLevel++;
+        note({merges:1,best_cascade:cascadeLevel});
         console.log(`[MERGE] eslabón=${cascadeLevel} color=${color} (${COLORS[color].n}) grupo=[${group}] fuente=[${group.filter(g=>g!==targetIdx).join(',')}] -> destino=${targetIdx} | tope=${COLORS[getTopColor(targetIdx)].n} ×${countTopColor(targetIdx)} total=${G.board[targetIdx].stack.length} | ronda=${G.round} jugador=${G.players[getCurrentPlayerIdx()].name}`);
         // Merge slide overlays: animate dots from sources to target
         const sourceCells=group.filter(gi=>gi!==targetIdx);
@@ -751,6 +758,7 @@ async function placeStack(cellIdx,poolIdx){
             const cascadeMultiplier=1+(cascadeLevel-1)*0.5;
             const points=Math.round(cleared*cascadeMultiplier);
             G.players[pi].score+=points;
+            note({clears:1,hexes_cleared:cleared,points_scored:points});
             highlightCell(targetIdx,'clearing');
             showScorePop(targetIdx,points,cascadeLevel>1?` ×${cascadeMultiplier.toFixed(1)}`:'');
             shakeScreen();
@@ -1011,6 +1019,7 @@ function showScorePop(cellIdx,pts,extra=''){
 
 // ===================== BOARD LOCK =====================
 function boardLockPenalty(){
+  note({board_locks:1});
   G.players.forEach(p=>p.score=Math.max(0,p.score-5));
   resetBoard();
   renderAll();
@@ -1190,8 +1199,33 @@ function showConfetti(){
   }
 }
 
+function recordMatch(){
+  try{
+    const players=G.players||[];
+    let best=0,bestHuman=-Infinity,bestAi=-Infinity,humans=0,hard=0,ai=0;
+    for(const p of players){
+      const sc=typeof p.score==='number'&&Number.isFinite(p.score)?p.score:0;
+      if(sc>best)best=sc;
+      if(p.type==='human'){humans++;if(sc>bestHuman)bestHuman=sc}
+      else{ai++;if(sc>bestAi)bestAi=sc;if(p.type==='hard')hard=1}
+    }
+    note({
+      games_finished:1,
+      rounds_played:G.maxRounds||0,
+      best_score:best,
+      human_wins:humans&&bestHuman>bestAi?1:0,
+      four_player_games:players.length===4?1:0,
+      long_games:(G.maxRounds||0)>=15?1:0,
+      hard_ai_games:hard,
+      ai_games:ai?1:0,
+      max_players:players.length
+    });
+  }catch(e){}
+}
+
 function endGame(){
   G.over=true;
+  recordMatch();
   showS('end');
   showConfetti();
   const sorted=[...G.players].sort((a,b)=>{
@@ -1313,6 +1347,7 @@ const TUT=[
   {t:'¡Vamos a jugar! Selecciona una pila del pool.'}
 ];
 function startTut(){
+  if(typeof setProgressSandbox==='function')setProgressSandbox(true);
   G.players=[
     {name:'Tú',type:'human',color:PCOL[0],score:0},
     {name:'IA Demo',type:'easy',color:PCOL[1],score:0}
@@ -1329,15 +1364,16 @@ function showTut(){
   btn.textContent=tutS===TUT.length-1?'¡Jugar!':'Siguiente';
   bg.classList.add('show');box.classList.add('show');
 }
-function tutNext(){tutS++;if(tutS>=TUT.length){document.getElementById('tutBg').classList.remove('show');document.getElementById('tutBox').classList.remove('show');startG()}else showTut()}
+function tutNext(){tutS++;if(tutS>=TUT.length){document.getElementById('tutBg').classList.remove('show');document.getElementById('tutBox').classList.remove('show');if(typeof setProgressSandbox==='function')setProgressSandbox(false);note({tutorials_finished:1});startG()}else showTut()}
 
 // ===================== UI =====================
-function setVersion(){document.querySelectorAll('.verNum').forEach(e=>e.textContent=GAME_VERSION.replace('v',''))}
+function setVersion(){document.querySelectorAll('.verNum').forEach(e=>e.textContent=String(GAME_VERSION).replace(/^v/i,''))}
 function showS(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');setVersion()}
 function setMsg(m){document.getElementById('msg').textContent=m}
 function showRules(){document.getElementById('rulesM').classList.add('show')}
 function hideRules(){document.getElementById('rulesM').classList.remove('show')}
 function shareResult(){
+  note({shares:1});
   const best=[...G.players].sort((a,b)=>b.score-a.score)[0];
   const txt=`🎲 HexaSort Party v2 — ¡${best?best.name:'Nadie'} ganó con ${best?best.score:0} pts!`;
   const ok=document.getElementById('shareOk');
@@ -1348,7 +1384,10 @@ function shareResult(){
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
 // ===================== INIT =====================
+loadProgress();
+backfillMeta(GAME_VERSION);
 renderPS(2);
+setVersion();
 </script>
 </body>
 </html>
