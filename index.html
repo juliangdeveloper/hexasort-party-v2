@@ -21,7 +21,6 @@ background-size:110px 110px,80px 80px;background-position:0 0,42px 55px}
 body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;box-shadow:inset 0 0 150px 34px rgba(3,5,10,.88)}
 .screen{display:none;min-height:100vh;padding:16px}.screen.active{display:flex;flex-direction:column;align-items:center}
 
-/* MENU */
 #menu{justify-content:center;text-align:center;position:relative;overflow:hidden}
 #menu::before{content:'';position:absolute;width:46px;height:40px;left:10%;top:20%;pointer-events:none;
 clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
@@ -31,11 +30,9 @@ animation:floatHex 7s ease-in-out infinite}
 clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 background:linear-gradient(160deg,#00FFCC,#0D47A1);filter:drop-shadow(0 0 12px rgba(0,255,204,.65));
 animation:floatHex 9s ease-in-out 1s infinite reverse}
-/* Hexágonos decorativos adicionales del menú (violeta + dorado) */
 .menu-hex{position:absolute;pointer-events:none;clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);animation:floatHex 10s ease-in-out infinite;z-index:0}
 .menu-hex.hex-violet{width:36px;height:31px;right:9%;top:36%;background:linear-gradient(160deg,#C14BEF 0%,#B829DD 45%,#6B198E 100%);filter:drop-shadow(0 0 14px rgba(184,41,221,.6));animation-delay:2.2s}
 .menu-hex.hex-gold{width:28px;height:24px;left:11%;bottom:16%;background:linear-gradient(160deg,#FFE566 0%,#FFD700 50%,#C77D12 100%);filter:drop-shadow(0 0 12px rgba(255,215,0,.6));animation-duration:12s;animation-delay:.6s}
-/* Líneas de circuito teal tenues — fondo global (tablero + fin + menú) */
 #bgCircuit{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.075;background-image:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='210'%3E%3Cg fill='none' stroke='%2330E6D0' stroke-width='1.3'%3E%3Cpath d='M20 26h58v22h34'/%3E%3Cpath d='M222 34v52h-50v26'/%3E%3Cpath d='M40 150h64v-20h54'/%3E%3Cpath d='M150 186h70v-24'/%3E%3Cpath d='M262 150v-60h-20'/%3E%3Ccircle cx='20' cy='26' r='2.4' fill='%2330E6D0' stroke='none'/%3E%3Ccircle cx='128' cy='62' r='1.7' fill='%2330E6D0' stroke='none'/%3E%3Ccircle cx='222' cy='34' r='2' fill='%2330E6D0' stroke='none'/%3E%3Ccircle cx='170' cy='130' r='1.9' fill='%2330E6D0' stroke='none'/%3E%3Ccircle cx='150' cy='186' r='2.2' fill='%2330E6D0' stroke='none'/%3E%3Ccircle cx='100' cy='96' r='1.5' fill='%2330E6D0' stroke='none'/%3E%3C/g%3E%3C/svg%3E");background-size:300px 210px;background-repeat:repeat}
 @keyframes floatHex{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-14px) rotate(14deg)}}
 .logo-hex{width:84px;height:72px;margin:0 auto 10px;position:relative;
@@ -84,7 +81,6 @@ text-shadow:0 1px 0 rgba(255,255,255,.35),0 -1px 1px rgba(0,0,0,.2);box-shadow:0
 .pcb label:has(input:checked){border-color:var(--dorado);background:rgba(255,215,0,.12);color:#FFE566;font-weight:700;box-shadow:0 0 10px rgba(255,215,0,.25)}
 .pcb input{display:none}
 
-/* GAME LAYOUT */
 #game{padding:4px 8px 8px;width:100%;background:radial-gradient(430px 390px at 50% 42%,rgba(26,32,53,.65),transparent 72%)}
 .g-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:0 4px;margin-bottom:6px;position:relative}
 .g-hud-l,.g-hud-r{flex:0 1 auto;display:flex;align-items:center;gap:8px;min-width:0;position:relative}
@@ -92,7 +88,6 @@ text-shadow:0 1px 0 rgba(255,255,255,.35),0 -1px 1px rgba(0,0,0,.2);box-shadow:0
 .g-hud-r{justify-content:flex-end}
 .g-hud-c{display:flex;justify-content:center;flex:none;position:relative}
 
-/* CHIP DE TURNO — hexágono alargado dorado (master 02_tablero) */
 .turn-chip{position:relative;font-size:.72em;font-weight:800;font-family:'Baloo 2';color:#2A2010;letter-spacing:.02em;white-space:nowrap;
 padding:6px 14px 6px 18px;background:linear-gradient(180deg,#FFE56B 0%,#FFD700 42%,#E8A317 78%,#B8860B 100%);
 clip-path:polygon(5% 0,95% 0,100% 50%,95% 100%,5% 100%,0% 50%);
@@ -100,7 +95,6 @@ filter:drop-shadow(0 2px 5px rgba(0,0,0,.4)) drop-shadow(0 0 12px rgba(255,215,0
 .turn-chip::before{content:'▶';margin-right:5px;font-size:.72em;color:rgba(42,32,16,.75)}
 .turn-chip::after{content:'❯❯';margin-left:6px;color:rgba(42,32,16,.55);font-weight:900;letter-spacing:-1px}
 
-/* CONTADOR DE RONDA — círculo con anillo dorado */
 .round-badge{position:relative;width:46px;height:46px;border-radius:50%;background:#22272E;border:2.5px solid #FFD700;
 box-shadow:0 0 16px rgba(255,215,0,.5),inset 0 0 10px rgba(0,0,0,.55);
 display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
@@ -114,20 +108,17 @@ display:flex;flex-direction:column;align-items:center;justify-content:center;gap
 .pb-chip .pb-bar{position:absolute;bottom:0;left:0;height:3px;border-radius:2px;transition:width .6s ease}
 .pb-chip .pb-pts{margin-left:4px;font-size:.9em;font-family:'Baloo 2'}
 
-/* HEX BOARD */
 .board-wrap{display:flex;justify-content:center;margin:20px 0 0;position:relative}
 .hex-board{position:relative;width:340px;height:256px;filter:drop-shadow(0 0 18px rgba(0,168,255,.16))}
 .hex-row{display:flex;justify-content:center;gap:0;margin-bottom:-14px}
 .hex-cell{width:64px;height:56px;margin:0;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;
 font-weight:700;font-size:.75em;color:#fff;user-select:none;z-index:0;
 transition:transform .2s,filter .4s}
-/* Capa de fondo: hex pointy-top plano. Las pilas asoman COMPLETAS, sin clip. */
 .hex-cell::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
 clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 background:var(--cell-bg,#111824);
 border:2px solid var(--cell-bd,var(--borde-neon));
 box-shadow:inset 0 0 10px rgba(0,168,255,.18),inset 0 -3px 6px rgba(0,0,0,.35)}
-/* Sin canto isométrico: celdas = hex pointy-top planos (merge-arrow sigue usando ::after). */
 .hex-cell::after{display:none}
 .hex-cell.merge-arrow::after{display:block}
 .hex-cell:hover:not(.locked){transform:scale(1.12);z-index:2}
@@ -157,16 +148,13 @@ background:rgba(255,255,255,.92);padding:0 4px;border-radius:6px;line-height:1.4
 .hex-cell.merge-from{animation:mergeFrom .8s ease-in-out}
 @keyframes mergeFrom{0%{filter:brightness(1)}30%{filter:brightness(2) drop-shadow(0 0 8px var(--accent))}60%{filter:brightness(.5)}100%{filter:brightness(1)}}
 
-/* SCREEN SHAKE */
 .hex-board.shake{animation:shakeBoard .3s ease-in-out}
 @keyframes shakeBoard{0%{transform:translate(0)}10%{transform:translate(-3px,0)}20%{transform:translate(3px,0)}30%{transform:translate(-3px,0)}40%{transform:translate(3px,0)}50%{transform:translate(-2px,0)}60%{transform:translate(2px,0)}70%{transform:translate(-1px,0)}80%{transform:translate(1px,0)}90%{transform:translate(-1px,0)}100%{transform:translate(0)}}
 
-/* MERGE SLIDE OVERLAYS */
 .merge-dot{position:fixed;pointer-events:none;z-index:80;border-radius:50%;width:18px;height:18px;box-shadow:0 0 10px rgba(255,255,255,.5);transition:none}
 .merge-dot.animate{animation:mergeSlideDot .5s cubic-bezier(.25,.46,.45,.94) forwards}
 @keyframes mergeSlideDot{0%{opacity:1;transform:scale(1)}80%{opacity:1;transform:scale(1.3)}100%{opacity:0;transform:scale(.3)}}
 
-/* CASCADE TEXT OVERLAY */
 .cascade-text{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);pointer-events:none;z-index:90;font-size:2.8em;font-weight:900;font-family:'Baloo 2';
 text-shadow:0 0 20px rgba(0,0,0,.9),0 0 30px var(--accent),0 0 60px var(--accent);white-space:nowrap;animation:cascadeTextPop 2s ease-out forwards}
 @keyframes cascadeTextPop{0%{opacity:1;transform:translate(-50%,-50%) scale(0) rotate(-10deg)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.3) rotate(3deg)}30%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0deg)}70%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0deg)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.1) rotate(2deg)}}
@@ -174,9 +162,7 @@ text-shadow:0 0 20px rgba(0,0,0,.9),0 0 30px var(--accent),0 0 60px var(--accent
 @keyframes arrowFly{0%{opacity:0;transform:translate(-200%,-50%)}30%{opacity:1}100%{opacity:0;transform:translate(100%,-50%)}}
 .hex-cell.valid-target::before{--cell-bd:var(--accent);filter:drop-shadow(0 0 6px rgba(255,215,0,.55));box-shadow:inset 0 0 10px rgba(255,215,0,.25)}
 
-/* POOL */
 .pool-wrap{display:flex;justify-content:center;gap:12px;margin:0 0 8px;flex-wrap:wrap;overflow:visible;align-items:flex-end}
-/* VERSION FOOTER */
 .ver{font-size:.7em;color:#9AA3B5;text-align:center;margin-top:16px;opacity:.75;letter-spacing:.4px}
 .pool-stack{background:linear-gradient(180deg,#1E2636,#141A26);border-radius:14px;padding:10px 14px;cursor:pointer;transition:all .3s cubic-bezier(.4,0,.2,1);
 border:2px solid var(--borde-neon);box-shadow:0 0 8px rgba(0,168,255,.22),inset 0 0 12px rgba(0,0,0,.4);min-width:60px;text-align:center;position:relative;overflow:visible}
@@ -202,7 +188,6 @@ clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 background:var(--hc);box-shadow:0 0 8px var(--hc)}
 .pool-stack .ps-label{font-size:.7em;color:var(--dim);margin-top:3px;font-weight:700}
 
-/* SCORE POPUP */
 .score-pop{position:fixed;pointer-events:none;font-size:2.2em;font-weight:900;z-index:100;font-family:'Baloo 2';
 text-shadow:0 2px 12px rgba(0,0,0,.9),0 0 20px var(--accent);animation:popUp 1.2s ease-out forwards}
 @keyframes popUp{0%{opacity:1;transform:translateY(0) scale(.5)}20%{transform:translateY(-10px) scale(1.3)}100%{opacity:0;transform:translateY(-80px) scale(1)}}
@@ -210,12 +195,10 @@ text-shadow:0 2px 12px rgba(0,0,0,.9),0 0 20px var(--accent);animation:popUp 1.2
 animation:burstSpin 1s ease-out forwards}
 @keyframes burstSpin{0%{opacity:1;transform:scale(0) rotate(0deg)}50%{opacity:1;transform:scale(1.5) rotate(180deg)}100%{opacity:0;transform:scale(2) rotate(360deg)}}
 
-/* EVENT OVERLAY */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center;padding:20px}
 .overlay.show{display:flex}
 .overlay-card{background:var(--panel);border-radius:20px;padding:24px;max-width:400px;width:100%;text-align:center;border:2px solid var(--accent)}
 
-/* RULES */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;padding:20px}
 .modal-bg.show{display:flex}
 .modal{background:linear-gradient(180deg,#1E2636,#171D2A);border-radius:16px;padding:20px;max-width:520px;width:100%;max-height:80vh;overflow-y:auto;border:2px solid #3A4559;box-shadow:0 10px 40px rgba(0,0,0,.5)}
@@ -223,7 +206,6 @@ animation:burstSpin 1s ease-out forwards}
 .modal p,.modal li{line-height:1.5;font-size:.88em}
 .modal ul{padding-left:18px;margin:6px 0}
 
-/* TUTORIAL */
 .tut-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none;pointer-events:none}
 .tut-bg.show{display:block;pointer-events:auto}
 .tut-box{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:linear-gradient(180deg,#1E2636,#171D2A);border:2px solid var(--dorado);
@@ -231,10 +213,8 @@ border-radius:14px;padding:14px 20px;max-width:460px;width:calc(100% - 32px);z-i
 .tut-box.show{display:block}
 .tut-box p{margin-bottom:8px;line-height:1.4;font-size:.9em}
 
-/* MSG */
 .msg{background:rgba(255,215,0,.08);border:1.5px solid var(--dorado);border-radius:10px;padding:6px 12px;text-align:center;font-weight:700;font-size:.8em;margin-top:6px;max-width:600px;width:100%;min-height:28px;color:#FFE9B0;box-shadow:0 0 10px rgba(255,215,0,.15);transition:all .3s}
 
-/* END */
 #end{text-align:center;padding-top:30px;background:radial-gradient(420px 280px at 50% 20%,rgba(255,209,102,.09),transparent 65%)}
 #end h1{font-size:2.1em;margin-bottom:14px;font-family:'Baloo 2';font-weight:800;color:#FFCC00;text-transform:uppercase;
 -webkit-text-stroke:1px #fff;text-shadow:0 0 14px rgba(255,204,0,.55),0 0 40px rgba(255,204,0,.25),0 2px 4px rgba(0,0,0,.4)}
@@ -250,7 +230,6 @@ border-radius:14px;padding:14px 20px;max-width:460px;width:calc(100% - 32px);z-i
 .end-acts .btn-p{flex:1 1 100%;font-size:1.15em;padding:12px 28px}
 .end-acts .btn-cy,.end-acts .btn-mg{flex:1 1 auto;min-width:130px}
 
-/* CONFETTI — barras finas neón + hexágonos pequeños (master 04_fin) */
 .confetti{position:fixed;top:-16px;z-index:200;pointer-events:none;opacity:0;border-radius:1px;
 animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
 .confetti-bar{background:currentColor;box-shadow:0 0 8px currentColor}
@@ -261,7 +240,6 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
 100%{opacity:0;transform:translateY(104vh) translateX(calc(var(--sway,-40px)*-.45)) rotate(var(--spin,720deg)) scale(.6)}}
 
 
-/* MOBILE RESPONSIVE */
 @media(max-width:480px){
   #menu h1 .mt1{font-size:1.5em}
   #menu h1 .mt2{font-size:1.2em}
@@ -297,7 +275,6 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
 <body>
 <div id="bgCircuit" aria-hidden="true"></div>
 
-<!-- MENU -->
 <div id="menu" class="screen active">
   <span class="menu-hex hex-violet" aria-hidden="true"></span>
   <span class="menu-hex hex-gold" aria-hidden="true"></span>
@@ -329,7 +306,6 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
   <div class="ver">v<span class="verNum"></span></div>
 </div>
 
-<!-- GAME -->
 <div id="game" class="screen">
   <div class="g-top">
     <div class="g-hud-l">
@@ -354,7 +330,6 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
   <div class="ver">v<span class="verNum"></span></div>
 </div>
 
-<!-- END -->
 <div id="end" class="screen">
   <h1>🏆 ¡Fin del Juego!</h1>
   <div id="endRank"></div>
@@ -367,7 +342,6 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
   </div>
 </div>
 
-<!-- RULES -->
 <div class="modal-bg" id="rulesM">
   <div class="modal">
     <h2>📜 Reglas — HexaSort Party v2</h2>
@@ -389,15 +363,13 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
   </div>
 </div>
 
-<!-- TUTORIAL -->
 <div class="tut-bg" id="tutBg"></div>
 <div class="tut-box" id="tutBox"><p id="tutTx"></p><button class="btn btn-p btn-sm" id="tutBtn" onclick="tutNext()">Siguiente</button></div>
 
 
-<script src="meta.js?v=1.4.3"></script>
-<script src="progress.js?v=1.4.3"></script>
+<script src="meta.js?v=1.4.4"></script>
+<script src="progress.js?v=1.4.4"></script>
 <script>
-// ===================== CONSTANTS =====================
 const COLORS = {
   red:{c:'#FF2A6D',n:'Rojo'}, blue:{c:'#00E5FF',n:'Azul'}, green:{c:'#00F5A0',n:'Verde'},
   yellow:{c:'#FFD700',n:'Amarillo'}, purple:{c:'#B829DD',n:'Morado'}, orange:{c:'#FF8C00',n:'Naranja'}
@@ -405,43 +377,39 @@ const COLORS = {
 const COLOR_KEYS = Object.keys(COLORS);
 const PCOL = ['#FF6B9D','#8A4DFF','#00F5A0','#FFD700'];
 
-// 19-hex honeycomb layout: 3-4-5-4-3
 const ROWS = [[0,1,2],[3,4,5,6],[7,8,9,10,11],[12,13,14,15],[16,17,18]];
-// Adjacency for staggered hex grid
 const ADJ = [
-  [1,3],          // 0
-  [0,2,4],        // 1
-  [1,5],          // 2
-  [0,4,7,8],      // 3
-  [1,3,5,8,9],    // 4
-  [2,4,6,9,10],   // 5
-  [5,10,11],      // 6
-  [3,8,12],       // 7
-  [3,4,7,9,12,13],// 8
-  [4,5,8,10,13,14],// 9
-  [5,6,9,11,14,15],// 10
-  [6,10,15],      // 11
-  [7,8,13,16],    // 12
-  [8,9,12,14,16,17],// 13
-  [9,10,13,15,17,18],// 14
-  [10,11,14,18],  // 15
-  [12,13,17],     // 16
-  [13,14,16,18],  // 17
-  [14,15,17]      // 18
+  [1,3],
+  [0,2,4],
+  [1,5],
+  [0,4,7,8],
+  [1,3,5,8,9],
+  [2,4,6,9,10],
+  [5,10,11],
+  [3,8,12],
+  [3,4,7,9,12,13],
+  [4,5,8,10,13,14],
+  [5,6,9,11,14,15],
+  [6,10,15],
+  [7,8,13,16],
+  [8,9,12,14,16,17],
+  [9,10,13,15,17,18],
+  [10,11,14,18],
+  [12,13,17],
+  [13,14,16,18],
+  [14,15,17]
 ];
 
 const THRESHOLD = 10;
-const CASCADE_STEP_MS = 1600; // pausa visible por eslabón de cascada
-const GAME_VERSION='1.4.3';
+const CASCADE_STEP_MS = 1600;
+const GAME_VERSION='1.4.4';
 
-// ===================== GAME STATE =====================
 let G = {
   players:[], round:0, maxRounds:10, curP:0, phase:'idle',
   board:[], pool:[], poolUsed:[], selectedPool:-1,
   rotationOffset:0, over:false, animating:false
 };
 
-// ===================== SETUP =====================
 function setPC(n){
   document.querySelectorAll('#pcBtns .cbtn').forEach((b,i)=>b.classList.toggle('on',i===n-2));
   renderPS(n);
@@ -458,7 +426,6 @@ function renderPS(n){
 function getPC(){const a=document.querySelector('#pcBtns .cbtn.on');return a?parseInt(a.textContent):2}
 function getDur(){return parseInt(document.querySelector('input[name=rnd]:checked')?.value||10)}
 
-// ===================== START =====================
 function startG(tut=false){
   if(typeof setProgressSandbox==='function')setProgressSandbox(false);
   const n=getPC();
@@ -478,25 +445,21 @@ function startG(tut=false){
 
 function resetBoard(){
   G.board=[];
-  for(let i=0;i<19;i++) G.board.push({stack:[]}); // stack = array of color strings
+  for(let i=0;i<19;i++) G.board.push({stack:[]});
 }
 
-// ===================== POOL =====================
 function generatePool(){
   G.pool=[];G.poolUsed=[];
   for(let i=0;i<3;i++){
-    const height=Math.floor(Math.random()*4)+2; // 2-5 layers
+    const height=Math.floor(Math.random()*4)+2;
     const layers=[];
-    // Guarantee mixed colors: pick from at least 2 different colors
     const available=[...COLOR_KEYS];
-    // Shuffle available colors
     for(let j=available.length-1;j>0;j--){const k=Math.floor(Math.random()*(j+1));[available[j],available[k]]=[available[k],available[j]]}
-    const numDistinct=Math.min(available.length, 2+Math.floor(Math.random()*3)); // 2-4 distinct colors
+    const numDistinct=Math.min(available.length, 2+Math.floor(Math.random()*3));
     const poolColors=available.slice(0,numDistinct);
     for(let j=0;j<height;j++){
       layers.push(poolColors[Math.floor(Math.random()*poolColors.length)]);
     }
-    // Ensure at least 2 different colors in the stack
     if(new Set(layers).size<2&&height>=2){
       layers[Math.floor(Math.random()*height)]=poolColors[1];
     }
@@ -506,14 +469,12 @@ function generatePool(){
   G.selectedPool=-1;
 }
 
-// ===================== ROUND / TURNS =====================
 function nextRound(){
   G.round++;
   if(G.round>G.maxRounds){endGame();return}
   generatePool();
-  // Rotation: round 1 → offset 0, round 2 → offset 1, etc.
   G.rotationOffset=(G.round-1)%G.players.length;
-  G.curP=0; // index into rotated order
+  G.curP=0;
   startTurn();
 }
 
@@ -527,16 +488,12 @@ function startTurn(){
   const pi=getCurrentPlayerIdx();
   const p=G.players[pi];
 
-  // Check if any pool stacks available
   const avail=poolAvailable();
   if(!avail){
-    // All 3 used → new pool
     generatePool();
   }
 
-  // Check if player can place anything
   if(!canPlaceAny()){
-    // Board lock!
     boardLockPenalty();
     return;
   }
@@ -557,7 +514,6 @@ function canPlaceAny(){
   return G.poolUsed.some((u,i)=>!u);
 }
 
-// ===================== PLACEMENT =====================
 function selectPool(idx){
   if(G.animating)return;
   const pi=getCurrentPlayerIdx();
@@ -566,7 +522,6 @@ function selectPool(idx){
   G.selectedPool=idx;
   renderPool();
   renderBoard();
-  // Highlight valid targets
   document.querySelectorAll('.hex-cell.empty').forEach(el=>el.classList.add('valid-target'));
 }
 
@@ -575,7 +530,7 @@ function clickCell(ci){
   const pi=getCurrentPlayerIdx();
   if(G.players[pi].type!=='human')return;
   if(G.selectedPool<0||G.poolUsed[G.selectedPool])return;
-  if(G.board[ci].stack.length>0)return; // not empty
+  if(G.board[ci].stack.length>0)return;
   placeStack(ci,G.selectedPool);
 }
 
@@ -588,7 +543,6 @@ async function placeStack(cellIdx,poolIdx){
   const layers=stack.layers;
   const height=stack.height;
 
-  // Place the stack — layers[0] = bottom, layers[height-1] = top
   for(let i=0;i<height;i++) G.board[cellIdx].stack.push(layers[i]);
   G.poolUsed[poolIdx]=true;
   G.selectedPool=-1;
@@ -596,26 +550,22 @@ async function placeStack(cellIdx,poolIdx){
   renderAll();
   await sleep(300);
 
-  // CASCADING MERGE: scan for all merge opportunities globally
   const pi=getCurrentPlayerIdx();
   let totalCleared=0;
   let cascadeLevel=0;
   let merged=true;
-  let mergeTarget=cellIdx; // Track which cell last RECEIVED hexagons for cascade tie-breaking
+  let mergeTarget=cellIdx;
 
   while(merged){
-    // CHAIN (T1): mejor cadena simulada para el estado actual (profundidad <=6)
     const chainPlan=computeBestChain();
     let chainCursor=0;
     merged=false;
-    // Track which cells changed this iteration — include mergeTarget (the cell that just grew)
     const affected=new Set([mergeTarget]);
-    // Also scan cells that may have become adjacent to same-color after clears
     for(let i=0;i<19;i++){
       if(G.board[i].stack.length>0)affected.add(i);
     }
 
-    const processed=new Set(); // avoid re-processing same group
+    const processed=new Set();
 
     for(const startCell of affected){
       if(G.board[startCell].stack.length===0)continue;
@@ -624,7 +574,6 @@ async function placeStack(cellIdx,poolIdx){
       const key=`${startCell}-${color}`;
       if(processed.has(key))continue;
 
-      // BFS to find ALL connected cells with this color on top
       const visited=new Set([startCell]);
       const group=[startCell];
       const queue=[startCell];
@@ -641,15 +590,11 @@ async function placeStack(cellIdx,poolIdx){
         }
       }
 
-      // Mark all cells in this group as processed
       for(const gi of group)processed.add(`${gi}-${color}`);
 
-      // Only merge if group has 2+ cells
       if(group.length<=1)continue;
 
       let targetIdx=group[0];
-      // CHAIN (T1): consumir el primer paso del plan del mismo color cuyo
-      // grupo solape el grupo actual (fallback R2 si no hay paso que encaje)
       let planStep=null;
       if(chainPlan){
         for(let c0=chainCursor;c0<chainPlan.length;c0++){
@@ -663,11 +608,6 @@ async function placeStack(cellIdx,poolIdx){
         targetIdx=planStep.target;
         console.log(`[CHAIN] eslabón=${cascadeLevel} color=${COLORS[color].n} grupo=[${group.join(',')}] -> target=${targetIdx} (plan)`);
       }else{
-      // R2 (FIX): la heurística vieja siempre daba 0 — el BFS del grupo ya absorbía a
-      // todos los vecinos del mismo color. Ahora se SIMULA la fusión en cada candidato
-      // (tops post-merge: las fuentes pierden su color, el candidato lo conserva) y se
-      // cuentan las aristas del mismo color que quedan tocando celdas cambiadas:
-      // más aristas = más encadenado disponible para la siguiente iteración.
       const chains={};
       let bestChain=-1;
       for(const gi of group){
@@ -706,14 +646,10 @@ async function placeStack(cellIdx,poolIdx){
       }
       }
 
-      // Merge: move all hexagons of this color from smaller stacks INTO targetIdx
       let anyMoved=false;
-      // T2: registrar cuántos hex del run volaron por fuente (para animación)
       const srcRuns={};
       for(const gi of group){
         if(gi===targetIdx)continue;
-        // T1: SOLO se mueve el run contiguo del tope (mecánica de pila, el estado
-        // final es el único objetivo: hex contiguos del mismo color en torre)
         const nRun=countTopColor(gi);
         const toMove=[];
         for(let z=nRun;z>0;z--)toMove.push(G.board[gi].stack.pop());
@@ -728,27 +664,23 @@ async function placeStack(cellIdx,poolIdx){
 
       if(anyMoved){
         merged=true;
-        mergeTarget=targetIdx; // Track the receiving cell for next cascade iteration
+        mergeTarget=targetIdx;
         cascadeLevel++;
         note({merges:1,best_cascade:cascadeLevel});
         console.log(`[MERGE] eslabón=${cascadeLevel} color=${color} (${COLORS[color].n}) grupo=[${group}] fuente=[${group.filter(g=>g!==targetIdx).join(',')}] -> destino=${targetIdx} | tope=${COLORS[getTopColor(targetIdx)].n} ×${countTopColor(targetIdx)} total=${G.board[targetIdx].stack.length} | ronda=${G.round} jugador=${G.players[getCurrentPlayerIdx()].name}`);
-        // Merge slide overlays: animate dots from sources to target
         const sourceCells=group.filter(gi=>gi!==targetIdx);
         showMergeOverlays(sourceCells,targetIdx,color);
         flyHexes(sourceCells,targetIdx,color,srcRuns);
-        // Animate source cells (dimming) and target cell (glowing)
         for(const gi of group){
           if(gi!==targetIdx)highlightCell(gi,'merge-from');
         }
         highlightCell(targetIdx,'merging');
-        // Show directional arrows on source cells
         for(const gi of group){
           if(gi!==targetIdx)highlightCell(gi,'merge-arrow');
         }
         await sleep(CASCADE_STEP_MS);
         renderAll();
 
-        // Check if the receiving cell reached threshold
         const topC=getTopColor(targetIdx);
         if(topC){
           const topCount=countTopColor(targetIdx);
@@ -777,7 +709,6 @@ async function placeStack(cellIdx,poolIdx){
   G.animating=false;
   console.log(`[FIN] eslabones=${cascadeLevel} C=${cellIdx} top=${getTopColor(cellIdx)?COLORS[getTopColor(cellIdx)].n:'-'} countTopColor=${countTopColor(cellIdx)}`);
 
-  // Advance to next player
   G.curP++;
   if(G.curP>=G.players.length){
     nextRound();
@@ -815,13 +746,6 @@ function removeTopColor(cellIdx){
   return removed;
 }
 
-// ============ T1: MEJOR CADENA (computeBestChain) ============
-// Función pura: simula en profundidad (<=6) las secuencias de merge posibles y
-// devuelve la secuencia cuyo ESTADO FINAL maximiza hex contiguos del mismo color
-// apilados en una torre (objetivo: construir hacia THRESHOLD=10 para destruir).
-// Permite pasos intermedios donde un hex/pila suba TEMPORALMENTE a la torre más
-// alta. La simulación replica EXACTAMENTE la mecánica de placeStack: cada paso
-// mueve el run contiguo del tope del color desde las fuentes hacia el candidato.
 function computeBestChain(){
   const MAXD=6;
   const stacks=G.board.map(c=>[...c.stack]);
@@ -833,7 +757,6 @@ function computeBestChain(){
     for(let i=st.length-1;i>=0&&st[i]===t;i--)n++;
     return n;
   };
-  // Grupos BFS de celdas con el MISMO color de tope (tamaño >=2)
   function groupsOf(st){
     const groups=[],seen=new Set();
     for(let i=0;i<19;i++){
@@ -851,10 +774,10 @@ function computeBestChain(){
       if(comp.length>=2)groups.push(comp);
     }
     groups.sort((a,b)=>b.length-a.length);
-    return groups.slice(0,8); // branch factor acotado: los 8 grupos más grandes
+    return groups.slice(0,8);
   }
   function applyMove(st,group,target){
-    const next=st.map(s=>[...s]); // copia profunda por rama
+    const next=st.map(s=>[...s]);
     for(const gi of group){
       if(gi===target)continue;
       const n=runOf(next[gi]);
@@ -862,8 +785,6 @@ function computeBestChain(){
     }
     return next;
   }
-  // Score del ESTADO FINAL (hoja): consolida TODOS los grupos del mismo color de
-  // tope (size>=2) antes de inflar ninguna torre; 0 grupos activos ideal.
   function countActiveGroups(st){
     let g=0;const seen=new Set();
     for(let i=0;i<19;i++){
@@ -891,7 +812,7 @@ function computeBestChain(){
     const groups=groupsOf(st);
     for(const g of groups){
       const color=topOf(st[g[0]]);
-      for(const t of g){ // cada celda del grupo como candidato target
+      for(const t of g){
         moves.push({color:color,source:g.filter(x=>x!==t),target:t});
         dfs(applyMove(st,g,t),depth+1,moves);
         moves.pop();
@@ -918,7 +839,6 @@ function shakeScreen(){
 }
 
 function flyHexes(sourceIdxs,targetIdx,color,runs){
-  // T2: los hex del run vuelan REALMENTE desde cada celda fuente al destino
   const targetEl=document.querySelector(`.hex-cell[data-ci="${targetIdx}"]`);
   if(!targetEl)return;
   const tr=targetEl.getBoundingClientRect();
@@ -929,10 +849,10 @@ function flyHexes(sourceIdxs,targetIdx,color,runs){
     if(!srcEl)continue;
     const sr=srcEl.getBoundingClientRect();
     const sx=sr.left+sr.width/2,sy=sr.top+sr.height/2;
-    const n=Math.min(2,(runs&&runs[si])||1); // máximo 2 clones por fuente
+    const n=Math.min(2,(runs&&runs[si])||1);
     for(let k=0;k<n;k++){
       const hx=document.createElement('div');
-      hx.className='stack-hex'; // hereda la forma de hexágono y var(--hc)
+      hx.className='stack-hex';
       hx.style.cssText=`position:fixed;left:${sx-28.5}px;top:${sy-12}px;width:57px;height:24px;margin:0;z-index:100;pointer-events:none;transition:none;--hc:${col}`;
       document.body.appendChild(hx);
       const dx=tx-sx,dy=ty-sy;
@@ -962,7 +882,6 @@ function showMergeOverlays(sourceIdxs,targetIdx,color){
     const dx=tx-sx;
     const dy=ty-sy;
 
-    // Create multiple dots per source for a stream effect
     for(let d=0;d<3;d++){
       const dot=document.createElement('div');
       dot.className='merge-dot';
@@ -970,7 +889,6 @@ function showMergeOverlays(sourceIdxs,targetIdx,color){
       dot.style.left=(sx-9)+'px';
       dot.style.top=(sy-9)+'px';
       document.body.appendChild(dot);
-      // Stagger each dot
       setTimeout(()=>{
         dot.style.transform=`translate(${dx}px,${dy}px)`;
         dot.style.transition='transform 0.45s cubic-bezier(.25,.46,.45,.94)';
@@ -1017,7 +935,6 @@ function showScorePop(cellIdx,pts,extra=''){
   setTimeout(()=>pop.remove(),1000);
 }
 
-// ===================== BOARD LOCK =====================
 function boardLockPenalty(){
   note({board_locks:1});
   G.players.forEach(p=>p.score=Math.max(0,p.score-5));
@@ -1030,14 +947,12 @@ function boardLockPenalty(){
   },2000);
 }
 
-// ===================== AI =====================
 function aiTurn(){
   const pi=getCurrentPlayerIdx();
   const p=G.players[pi];
   const emptyCells=[];
   G.board.forEach((c,i)=>{if(c.stack.length===0)emptyCells.push(i)});
 
-  // Pick best pool stack
   let bestScore=-Infinity,bestPool=-1,bestCell=-1;
 
   for(let pi2=0;pi2<3;pi2++){
@@ -1050,7 +965,6 @@ function aiTurn(){
   }
 
   if(bestPool<0){
-    // Random
     const avail=[];for(let i=0;i<3;i++)if(!G.poolUsed[i])avail.push(i);
     if(avail.length===0){G.curP++;if(G.curP>=G.players.length)nextRound();else startTurn();return}
     bestPool=avail[Math.floor(Math.random()*avail.length)];
@@ -1068,7 +982,6 @@ function evalPlacement(cellIdx,stack,aiType){
     return Math.random()*10;
   }
 
-  // Count adjacent same-color for each layer in the stack
   let adjSame=0;
   for(const color of layers){
     for(const ni of ADJ[cellIdx]){
@@ -1080,16 +993,13 @@ function evalPlacement(cellIdx,stack,aiType){
     return adjSame*5+height;
   }
 
-  // Hard: simulate merge cascade with bidirectional merge logic
-  // Build a virtual board (copy stack sizes + top colors)
   const vBoard=G.board.map(c=>({
     size:c.stack.length,
     top:c.stack.length>0?c.stack[c.stack.length-1]:null
   }));
 
-  // Place the virtual stack
   vBoard[cellIdx].size+=height;
-  vBoard[cellIdx].top=layers[layers.length-1]; // top of placed stack
+  vBoard[cellIdx].top=layers[layers.length-1];
 
   let cascadeScore=0;
   let cascadeLevel=0;
@@ -1106,7 +1016,6 @@ function evalPlacement(cellIdx,stack,aiType){
       const key=`${startCell}-${color}`;
       if(processed.has(key))continue;
 
-      // BFS for connected same-color group
       const visited=new Set([startCell]);
       const group=[startCell];
       const queue=[startCell];
@@ -1125,7 +1034,6 @@ function evalPlacement(cellIdx,stack,aiType){
       for(const gi of group)processed.add(`${gi}-${color}`);
       if(group.length<=1)continue;
 
-      // Find target: R1 direction — the LOWEST stack (min size), tie: prefer cellIdx
       let targetIdx=group[0];
       let minSize=vBoard[group[0]].size;
       for(let i=1;i<group.length;i++){
@@ -1136,7 +1044,6 @@ function evalPlacement(cellIdx,stack,aiType){
         }
       }
 
-      // Merge: sum all sizes into target
       let totalSize=0;
       let anyMoved=false;
       for(const gi of group){
@@ -1152,7 +1059,6 @@ function evalPlacement(cellIdx,stack,aiType){
         cascadeLevel++;
         simChanged=true;
 
-        // Check threshold
         if(vBoard[targetIdx].size>=THRESHOLD){
           const cleared=vBoard[targetIdx].size;
           cascadeScore+=Math.round(cleared*(1+(cascadeLevel-1)*0.5));
@@ -1163,13 +1069,11 @@ function evalPlacement(cellIdx,stack,aiType){
     }
   }
 
-  // Base score: cascade points + bonus for having mergeable adjacencies
   let score=cascadeScore*3;
-  if(cascadeScore===0)score=adjSame*5+height; // fallback if no merge
+  if(cascadeScore===0)score=adjSame*5+height;
   return score;
 }
 
-// ===================== END GAME =====================
 function showConfetti(){
   const colors=['#FF2A7D','#00E5FF','#FFD700','#9C50FF','#00F5A0','#FF6B9D','#B829DD'];
   for(let i=0;i<42;i++){
@@ -1185,11 +1089,11 @@ function showConfetti(){
     c.style.setProperty('--spin',(360+Math.random()*720)+'deg');
     c.style.setProperty('--sway',((Math.random()*140-70).toFixed(0))+'px');
     if(isBar){
-      c.style.width=(2+Math.random()*1.5)+'px';   // barras finas 2-3.5px
-      c.style.height=(8+Math.random()*7)+'px';    // 8-15px de largo
+      c.style.width=(2+Math.random()*1.5)+'px';
+      c.style.height=(8+Math.random()*7)+'px';
       if(Math.random()<0.4)c.style.transform='rotate(90deg)';
     }else{
-      const s=7+Math.random()*4;                  // hexágonos 7-11px
+      const s=7+Math.random()*4;
       c.style.width=s+'px';
       c.style.height=(s*0.866)+'px';
       c.style.clipPath='polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)';
@@ -1230,7 +1134,7 @@ function endGame(){
   showConfetti();
   const sorted=[...G.players].sort((a,b)=>{
     if(b.score!==a.score)return b.score-a.score;
-    return 0; // shared board: no tiebreak
+    return 0;
   });
   const medals=['🥇','🥈','🥉','4️⃣'];
   document.getElementById('endRank').innerHTML=sorted.map((p,i)=>{
@@ -1242,7 +1146,6 @@ function endGame(){
 }
 
 
-// ===================== RENDER =====================
 function renderAll(){
   renderBoard();
   renderPool();
@@ -1272,7 +1175,6 @@ function renderBoard(){
         onclick="clickCell(${ci})">`;
       if(!isEmpty){
         html+=`<div class="stack-vis">`;
-        // Show all layers up to 10; if >10 show first 2 + '...' + last 3
         const s=cell.stack;
         let showLayers;
         if(s.length<=10){
@@ -1309,11 +1211,9 @@ function renderPool(){
     html+=`<div class="pool-stack ${used?'used':''} ${sel?'selected':''}"
       onclick="selectPool(${i})" ${used?'':''}>
       <div class="ps-hex">`;
-    // Show mixed color layers (bottom to top)
     for(let j=0;j<Math.min(s.height,7);j++){
       html+=`<div class="ps-stack-hex" style="--hc:${COLORS[s.layers[j]].c}"></div>`;
     }
-    // Label: show color dots
     const uniqueColors=[...new Set(s.layers)];
     const dots=uniqueColors.map(c=>`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${COLORS[c].c};margin:1px"></span>`).join('');
     html+=`</div><div class="ps-label">${s.height} ${dots}</div></div>`;
@@ -1334,7 +1234,6 @@ function renderPlayerBar(){
   }).join('');
 }
 
-// ===================== TUTORIAL =====================
 let tutS=0;
 const TUT=[
   {t:'¡Bienvenido a HexaSort Party v2! ⬡ Tablero compartido de 19 hexágonos.'},
@@ -1366,7 +1265,6 @@ function showTut(){
 }
 function tutNext(){tutS++;if(tutS>=TUT.length){document.getElementById('tutBg').classList.remove('show');document.getElementById('tutBox').classList.remove('show');if(typeof setProgressSandbox==='function')setProgressSandbox(false);note({tutorials_finished:1});startG()}else showTut()}
 
-// ===================== UI =====================
 function setVersion(){document.querySelectorAll('.verNum').forEach(e=>e.textContent=String(GAME_VERSION).replace(/^v/i,''))}
 function showS(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');setVersion()}
 function setMsg(m){document.getElementById('msg').textContent=m}
@@ -1383,7 +1281,6 @@ function shareResult(){
 }
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
-// ===================== INIT =====================
 loadProgress();
 backfillMeta(GAME_VERSION);
 renderPS(2);

@@ -11,39 +11,39 @@
   var META_DEBOUNCE_MS = 1000;
 
   var STATS = [
-    { key: 'games_finished', monotonic: true }, // partidas terminadas
-    { key: 'rounds_played', monotonic: true }, // rondas jugadas en partidas terminadas
-    { key: 'placements', monotonic: true }, // pilas colocadas
-    { key: 'merges', monotonic: true }, // fusiones de color
-    { key: 'clears', monotonic: true }, // pilas que llegaron a 10
-    { key: 'hexes_cleared', monotonic: true }, // hexágonos eliminados
-    { key: 'points_scored', monotonic: true }, // puntos otorgados por eliminaciones
-    { key: 'best_score', monotonic: true }, // mejor puntaje final de una partida
-    { key: 'best_cascade', monotonic: true }, // mayor nivel de cascada
-    { key: 'board_locks', monotonic: true }, // veces que el tablero se cerró
-    { key: 'tutorials_finished', monotonic: true }, // tutoriales completados
-    { key: 'human_wins', monotonic: true }, // partidas en las que un humano superó a la IA
-    { key: 'four_player_games', monotonic: true }, // partidas terminadas de 4 jugadores
-    { key: 'long_games', monotonic: true }, // partidas terminadas de 15 rondas
-    { key: 'hard_ai_games', monotonic: true }, // partidas terminadas con IA difícil
-    { key: 'ai_games', monotonic: true }, // partidas terminadas con alguna IA
-    { key: 'shares', monotonic: true }, // resultados compartidos
-    { key: 'max_players', monotonic: true } // máximo de jugadores en una partida terminada
+    { key: 'games_finished', monotonic: true },
+    { key: 'rounds_played', monotonic: true },
+    { key: 'placements', monotonic: true },
+    { key: 'merges', monotonic: true },
+    { key: 'clears', monotonic: true },
+    { key: 'hexes_cleared', monotonic: true },
+    { key: 'points_scored', monotonic: true },
+    { key: 'best_score', monotonic: true },
+    { key: 'best_cascade', monotonic: true },
+    { key: 'board_locks', monotonic: true },
+    { key: 'tutorials_finished', monotonic: true },
+    { key: 'human_wins', monotonic: true },
+    { key: 'four_player_games', monotonic: true },
+    { key: 'long_games', monotonic: true },
+    { key: 'hard_ai_games', monotonic: true },
+    { key: 'ai_games', monotonic: true },
+    { key: 'shares', monotonic: true },
+    { key: 'max_players', monotonic: true }
   ];
 
   var LOGROS = [
-    { id: 'first_game', when: function (s) { return (s.games_finished || 0) >= 1; } }, // terminar una partida
-    { id: 'first_clear', when: function (s) { return (s.clears || 0) >= 1; } }, // eliminar una pila de 10
-    { id: 'first_cascade', when: function (s) { return (s.best_cascade || 0) >= 2; } }, // encadenar una fusión
-    { id: 'cascade_5', when: function (s) { return (s.best_cascade || 0) >= 5; } }, // cascada de nivel 5
-    { id: 'score_100', when: function (s) { return (s.best_score || 0) >= 100; } }, // 100 puntos en una partida
-    { id: 'score_500', when: function (s) { return (s.best_score || 0) >= 500; } }, // 500 puntos en una partida
-    { id: 'ten_games', when: function (s) { return (s.games_finished || 0) >= 10; } }, // terminar 10 partidas
-    { id: 'clears_50', when: function (s) { return (s.clears || 0) >= 50; } }, // eliminar 50 pilas
-    { id: 'board_lock', when: function (s) { return (s.board_locks || 0) >= 1; } }, // llenar el tablero una vez
-    { id: 'full_table', when: function (s) { return (s.four_player_games || 0) >= 1; } }, // terminar una partida de 4
-    { id: 'long_match', when: function (s) { return (s.long_games || 0) >= 1; } }, // terminar una partida de 15 rondas
-    { id: 'tutorial_done', when: function (s) { return (s.tutorials_finished || 0) >= 1; } } // completar el tutorial
+    { id: 'first_game', when: function (s) { return (s.games_finished || 0) >= 1; } },
+    { id: 'first_clear', when: function (s) { return (s.clears || 0) >= 1; } },
+    { id: 'first_cascade', when: function (s) { return (s.best_cascade || 0) >= 2; } },
+    { id: 'cascade_5', when: function (s) { return (s.best_cascade || 0) >= 5; } },
+    { id: 'score_100', when: function (s) { return (s.best_score || 0) >= 100; } },
+    { id: 'score_500', when: function (s) { return (s.best_score || 0) >= 500; } },
+    { id: 'ten_games', when: function (s) { return (s.games_finished || 0) >= 10; } },
+    { id: 'clears_50', when: function (s) { return (s.clears || 0) >= 50; } },
+    { id: 'board_lock', when: function (s) { return (s.board_locks || 0) >= 1; } },
+    { id: 'full_table', when: function (s) { return (s.four_player_games || 0) >= 1; } },
+    { id: 'long_match', when: function (s) { return (s.long_games || 0) >= 1; } },
+    { id: 'tutorial_done', when: function (s) { return (s.tutorials_finished || 0) >= 1; } }
   ];
 
   var SAVE = null;
