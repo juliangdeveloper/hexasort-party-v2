@@ -5,6 +5,47 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   var MAX_STATS = 20;
 
+  // Project status, set by hand and bumped with the version. Never computed from play.
+  // fase 1-6: Idea, Definición, Diseño, Construcción, Validación, Lanzamiento y mantenimiento.
+  // fase_estado 0-4: pendiente, en curso, bloqueada, en revisión, completada.
+  var PROYECTO = {
+    objetivo: 'Juego de fiesta por turnos de apilar hexágonos para 2 a 4 jugadores, humanos o IA, con tutorial, en el navegador.',
+    fase: 6,
+    fase_estado: 1,
+    fases_completadas: 5
+  };
+
+  var proyectoSource = PROYECTO;
+
+  function proyectoInt(n, lo, hi) {
+    return typeof n === 'number' && Number.isInteger(n) && n >= lo && n <= hi;
+  }
+
+  // Clean copy of a proyecto block, or null when any field is missing or out of range.
+  function metaProyecto(p) {
+    try {
+      if (!p || typeof p !== 'object' || Array.isArray(p)) return null;
+      var o = p.objetivo;
+      if (typeof o !== 'string' || !o.trim() || Array.from(o).length > 140) return null;
+      if (!proyectoInt(p.fase, 1, 6) || !proyectoInt(p.fase_estado, 0, 4) || !proyectoInt(p.fases_completadas, 0, 6)) return null;
+      return { objetivo: o, fase: p.fase, fase_estado: p.fase_estado, fases_completadas: p.fases_completadas };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Tests only: swap the block the writer uses (null restores PROYECTO).
+  function metaSetProyecto(p) {
+    proyectoSource = p === null ? PROYECTO : p;
+  }
+
+  // Adds the current proyecto block to a record being written, when it is valid.
+  function withProyecto(record) {
+    var p = metaProyecto(proyectoSource);
+    if (p) record.proyecto = p;
+    return record;
+  }
+
   function plainVersion(version) {
     var s = typeof version === 'string' ? version : '';
     if (s.charAt(0) === 'v' || s.charAt(0) === 'V') s = s.slice(1);
@@ -115,6 +156,7 @@
         logros: ids,
         hitos: hitos
       };
+      withProyecto(record);
       storage.setItem(key, JSON.stringify(record));
       try {
         var w = globalThis.window;
@@ -125,5 +167,10 @@
     } catch (e) {}
   }
 
-  return { metaUpdate: metaUpdate };
+  return {
+    metaUpdate: metaUpdate,
+    metaProyecto: metaProyecto,
+    metaSetProyecto: metaSetProyecto,
+    PROYECTO: PROYECTO
+  };
 });

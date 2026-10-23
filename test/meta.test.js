@@ -14,7 +14,7 @@ const {
   setProgressSandbox
 } = require('../progress.js');
 
-const VERSION = '1.4.2';
+const VERSION = '1.4.3';
 
 function mockStorage(seed) {
   const map = new Map();
@@ -80,7 +80,7 @@ test('old save without meta.v1 builds the record once', () => {
 
   assert.equal(localStorage.getItem(SAVE_KEY), saveRaw);
   const rec = JSON.parse(localStorage.getItem(META_KEY));
-  assert.deepEqual(Object.keys(rec), ['v', 'slug', 'version', 'updatedAt', 'stats', 'logros', 'hitos']);
+  assert.deepEqual(Object.keys(rec), ['v', 'slug', 'version', 'updatedAt', 'stats', 'logros', 'hitos', 'proyecto']);
   assert.equal(rec.v, 1);
   assert.equal(rec.slug, 'hexasort-party-v2');
   assert.equal(rec.version, VERSION);
@@ -215,7 +215,7 @@ test('metaUpdate keeps hitos, unions logros, and posts to the parent', () => {
   ];
   try {
     withNow('2026-10-23T18:00:00.000Z', () => {
-      metaUpdate('hexasort-party-v2', 'v1.4.2', {
+      metaUpdate('hexasort-party-v2', 'v1.4.3', {
         stats: { games_finished: 2, best_score: NaN, rounds_played: 3, label: 'no', inf: Infinity },
         logros: ['score_100', 'first_game', 'score_100'],
         declared
