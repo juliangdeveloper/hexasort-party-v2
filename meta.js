@@ -6,10 +6,10 @@
   var MAX_STATS = 20;
 
   var PROYECTO = {
-    objetivo: 'Juego de fiesta por turnos de apilar hexágonos para 2 a 4 jugadores, humanos o IA, con tutorial, en el navegador.',
-    fase: 6,
+    objetivo: 'Juego web público de fiesta por turnos de apilar hexágonos, en Pages.',
+    fase: 3,
     fase_estado: 1,
-    fases_completadas: 5
+    fases_completadas: 2
   };
 
   var proyectoSource = PROYECTO;
@@ -23,7 +23,7 @@
       if (!p || typeof p !== 'object' || Array.isArray(p)) return null;
       var o = p.objetivo;
       if (typeof o !== 'string' || !o.trim() || Array.from(o).length > 140) return null;
-      if (!proyectoInt(p.fase, 1, 6) || !proyectoInt(p.fase_estado, 0, 4) || !proyectoInt(p.fases_completadas, 0, 6)) return null;
+      if (!proyectoInt(p.fase, 1, 7) || !proyectoInt(p.fase_estado, 0, 4) || !proyectoInt(p.fases_completadas, 0, 6)) return null;
       return { objetivo: o, fase: p.fase, fase_estado: p.fase_estado, fases_completadas: p.fases_completadas };
     } catch (e) {
       return null;

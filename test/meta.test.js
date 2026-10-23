@@ -14,7 +14,7 @@ const {
   setProgressSandbox
 } = require('../progress.js');
 
-const VERSION = '1.4.4';
+const VERSION = '1.4.5';
 
 function mockStorage(seed) {
   const map = new Map();
@@ -215,7 +215,7 @@ test('metaUpdate keeps hitos, unions logros, and posts to the parent', () => {
   ];
   try {
     withNow('2026-10-23T18:00:00.000Z', () => {
-      metaUpdate('hexasort-party-v2', 'v1.4.4', {
+      metaUpdate('hexasort-party-v2', 'v1.4.5', {
         stats: { games_finished: 2, best_score: NaN, rounds_played: 3, label: 'no', inf: Infinity },
         logros: ['score_100', 'first_game', 'score_100'],
         declared
