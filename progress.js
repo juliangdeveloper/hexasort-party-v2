@@ -7,30 +7,29 @@
   var SLUG = 'hexasort-party-v2';
   var SAVE_KEY = 'hexasort-party-v2.save';
   var META_KEY = 'meta.v1.hexasort-party-v2';
+  var CORRUPT_KEY = 'meta.v1.hexasort-party-v2.corrupt';
   var META_DEBOUNCE_MS = 1000;
 
-  var STAT_KEYS = [
-    'games_finished', // partidas terminadas
-    'rounds_played', // rondas jugadas en partidas terminadas
-    'placements', // pilas colocadas
-    'merges', // fusiones de color
-    'clears', // pilas que llegaron a 10
-    'hexes_cleared', // hexágonos eliminados
-    'points_scored', // puntos otorgados por eliminaciones
-    'best_score', // mejor puntaje final de una partida
-    'best_cascade', // mayor nivel de cascada
-    'board_locks', // veces que el tablero se cerró
-    'tutorials_finished', // tutoriales completados
-    'human_wins', // partidas en las que un humano superó a la IA
-    'four_player_games', // partidas terminadas de 4 jugadores
-    'long_games', // partidas terminadas de 15 rondas
-    'hard_ai_games', // partidas terminadas con IA difícil
-    'ai_games', // partidas terminadas con alguna IA
-    'shares', // resultados compartidos
-    'max_players' // máximo de jugadores en una partida terminada
+  var STATS = [
+    { key: 'games_finished', monotonic: true }, // partidas terminadas
+    { key: 'rounds_played', monotonic: true }, // rondas jugadas en partidas terminadas
+    { key: 'placements', monotonic: true }, // pilas colocadas
+    { key: 'merges', monotonic: true }, // fusiones de color
+    { key: 'clears', monotonic: true }, // pilas que llegaron a 10
+    { key: 'hexes_cleared', monotonic: true }, // hexágonos eliminados
+    { key: 'points_scored', monotonic: true }, // puntos otorgados por eliminaciones
+    { key: 'best_score', monotonic: true }, // mejor puntaje final de una partida
+    { key: 'best_cascade', monotonic: true }, // mayor nivel de cascada
+    { key: 'board_locks', monotonic: true }, // veces que el tablero se cerró
+    { key: 'tutorials_finished', monotonic: true }, // tutoriales completados
+    { key: 'human_wins', monotonic: true }, // partidas en las que un humano superó a la IA
+    { key: 'four_player_games', monotonic: true }, // partidas terminadas de 4 jugadores
+    { key: 'long_games', monotonic: true }, // partidas terminadas de 15 rondas
+    { key: 'hard_ai_games', monotonic: true }, // partidas terminadas con IA difícil
+    { key: 'ai_games', monotonic: true }, // partidas terminadas con alguna IA
+    { key: 'shares', monotonic: true }, // resultados compartidos
+    { key: 'max_players', monotonic: true } // máximo de jugadores en una partida terminada
   ];
-
-  var MAX_KEYS = { best_score: 1, best_cascade: 1, max_players: 1 };
 
   var LOGROS = [
     { id: 'first_game', when: function (s) { return (s.games_finished || 0) >= 1; } }, // terminar una partida
@@ -48,16 +47,47 @@
   ];
 
   var SAVE = null;
-  var saveExtra = {};
-  var saveReadable = false;
   var metaVersion = '';
   var metaDirty = false;
   var metaTimer = null;
   var metaLastWrite = 0;
+  var sandbox = false;
+
+  function plainVersion(version) {
+    var s = typeof version === 'string' ? version : '';
+    if (s.charAt(0) === 'v' || s.charAt(0) === 'V') s = s.slice(1);
+    return s;
+  }
+
+  function inDemo() {
+    try {
+      var loc = globalThis.location;
+      var q = loc && typeof loc.search === 'string' ? loc.search : '';
+      if (!q) return false;
+      var body = q.charAt(0) === '?' ? q.slice(1) : q;
+      var parts = body.split('&');
+      for (var i = 0; i < parts.length; i++) {
+        var eq = parts[i].split('=');
+        var name = '';
+        var val = '';
+        try {
+          name = decodeURIComponent(eq[0] || '');
+          val = decodeURIComponent((eq[1] || '').replace(/\+/g, ' '));
+        } catch (e) { continue; }
+        if ((name === 'demo' || name === 'preview') && val === '1') return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  function blocked() {
+    return sandbox || inDemo();
+  }
 
   function defaultSave() {
     var s = {};
-    for (var i = 0; i < STAT_KEYS.length; i++) s[STAT_KEYS[i]] = 0;
+    var n = Math.min(20, STATS.length);
+    for (var i = 0; i < n; i++) s[STATS[i].key] = 0;
     return s;
   }
 
@@ -65,37 +95,38 @@
     return globalThis.localStorage;
   }
 
-  function loadProgress() {
+  function applyNumbers(obj) {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return;
+    var n = Math.min(20, STATS.length);
+    for (var i = 0; i < n; i++) {
+      var key = STATS[i].key;
+      var v = obj[key];
+      if (typeof v !== 'number' || !Number.isFinite(v)) continue;
+      if (STATS[i].monotonic) SAVE[key] = Math.max(SAVE[key], v);
+      else SAVE[key] = v;
+    }
+  }
+
+  function readSave() {
     SAVE = defaultSave();
-    saveExtra = {};
-    saveReadable = false;
+    try {
+      var storage = ls();
+      if (!storage) return;
+      var raw = storage.getItem(SAVE_KEY);
+      if (raw == null) return;
+      applyNumbers(JSON.parse(raw));
+    } catch (e) {}
+  }
+
+  function loadProgress() {
+    sandbox = false;
     metaDirty = false;
     metaLastWrite = 0;
     if (metaTimer != null) {
       try { clearTimeout(metaTimer); } catch (e) {}
       metaTimer = null;
     }
-    try {
-      var storage = ls();
-      if (!storage) return;
-      var raw = storage.getItem(SAVE_KEY);
-      if (raw == null) {
-        saveReadable = true;
-        return;
-      }
-      var data = JSON.parse(raw);
-      if (!data || typeof data !== 'object' || Array.isArray(data)) return;
-      var keys = Object.keys(data);
-      for (var i = 0; i < keys.length; i++) {
-        var k = keys[i];
-        var n = data[k];
-        if (typeof n === 'number' && Number.isFinite(n) && STAT_KEYS.indexOf(k) !== -1) SAVE[k] = n;
-        else saveExtra[k] = n;
-      }
-      saveReadable = true;
-    } catch (e) {
-      saveReadable = false;
-    }
+    readSave();
   }
 
   function unlockedIds(save) {
@@ -109,56 +140,31 @@
 
   function statsSnapshot() {
     var stats = {};
-    for (var i = 0; i < STAT_KEYS.length; i++) {
-      var n = SAVE[STAT_KEYS[i]];
-      if (typeof n === 'number' && Number.isFinite(n)) stats[STAT_KEYS[i]] = n;
-    }
-    var extras = Object.keys(saveExtra);
-    for (var j = 0; j < extras.length; j++) {
-      if (Object.keys(stats).length >= 20) break;
-      var k = extras[j];
-      var v = saveExtra[k];
-      if (typeof v === 'number' && Number.isFinite(v)) stats[k] = v;
+    var n = Math.min(20, STATS.length);
+    for (var i = 0; i < n; i++) {
+      var key = STATS[i].key;
+      var v = SAVE[key];
+      if (typeof v === 'number' && Number.isFinite(v)) stats[key] = v;
     }
     return stats;
   }
 
-  function persistSave() {
-    try {
-      if (!saveReadable) return;
-      var storage = ls();
-      if (!storage) return;
-      var prev = {};
-      try {
-        var raw = storage.getItem(SAVE_KEY);
-        if (raw != null) {
-          var parsed = JSON.parse(raw);
-          if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
-          prev = parsed;
-        }
-      } catch (e) {
-        return;
-      }
-      var next = {};
-      var prevKeys = Object.keys(prev);
-      for (var i = 0; i < prevKeys.length; i++) next[prevKeys[i]] = prev[prevKeys[i]];
-      for (var j = 0; j < STAT_KEYS.length; j++) next[STAT_KEYS[j]] = SAVE[STAT_KEYS[j]];
-      storage.setItem(SAVE_KEY, JSON.stringify(next));
-    } catch (e) {}
+  function isValidRecord(parsed) {
+    return !!parsed && typeof parsed === 'object' && !Array.isArray(parsed) && parsed.v === 1 && parsed.slug === SLUG;
   }
 
   function writeMeta() {
     try {
+      if (blocked()) return;
       if (typeof globalThis.metaUpdate !== 'function') return;
-      persistSave();
-      globalThis.metaUpdate(SLUG, metaVersion, { stats: statsSnapshot(), logros: unlockedIds(SAVE) });
+      globalThis.metaUpdate(SLUG, metaVersion, { stats: statsSnapshot(), logros: unlockedIds(SAVE), declared: STATS });
     } catch (e) {}
   }
 
   function runScheduledMeta() {
     metaTimer = null;
     try {
-      if (!metaDirty || !saveReadable) return;
+      if (!metaDirty || blocked()) return;
       var wait = META_DEBOUNCE_MS - (Date.now() - metaLastWrite);
       if (wait > 0) {
         metaTimer = setTimeout(runScheduledMeta, wait);
@@ -172,7 +178,7 @@
 
   function scheduleMeta() {
     try {
-      if (!saveReadable) return;
+      if (blocked()) return;
       metaDirty = true;
       if (metaTimer != null) return;
       var wait = Math.max(0, META_DEBOUNCE_MS - (Date.now() - metaLastWrite));
@@ -182,7 +188,9 @@
 
   function flushProgressNow() {
     try {
-      if (!metaDirty || !saveReadable) return;
+      if (blocked()) return;
+      if (!metaDirty) return;
+      if (Date.now() - metaLastWrite < META_DEBOUNCE_MS) return;
       if (metaTimer != null) {
         try { clearTimeout(metaTimer); } catch (e) {}
         metaTimer = null;
@@ -195,15 +203,16 @@
 
   function bumpProgress(partial) {
     try {
-      if (!saveReadable || !partial || typeof partial !== 'object') return;
+      if (blocked() || !partial || typeof partial !== 'object') return;
       var changed = false;
-      for (var i = 0; i < STAT_KEYS.length; i++) {
-        var k = STAT_KEYS[i];
-        if (!Object.prototype.hasOwnProperty.call(partial, k)) continue;
-        var n = partial[k];
-        if (typeof n !== 'number' || !Number.isFinite(n)) continue;
-        if (MAX_KEYS[k]) SAVE[k] = Math.max(SAVE[k], n);
-        else SAVE[k] += n;
+      var n = Math.min(20, STATS.length);
+      for (var i = 0; i < n; i++) {
+        var key = STATS[i].key;
+        if (!Object.prototype.hasOwnProperty.call(partial, key)) continue;
+        var v = partial[key];
+        if (typeof v !== 'number' || !Number.isFinite(v)) continue;
+        if (STATS[i].monotonic && (key === 'best_score' || key === 'best_cascade' || key === 'max_players')) SAVE[key] = Math.max(SAVE[key], v);
+        else SAVE[key] += v;
         changed = true;
       }
       if (changed) scheduleMeta();
@@ -212,16 +221,37 @@
 
   function backfillMeta(version) {
     try {
-      if (typeof version === 'string') metaVersion = version;
-      if (!saveReadable) return;
+      if (typeof version === 'string') metaVersion = plainVersion(version);
+      if (blocked()) return;
       var storage = ls();
       if (!storage) return;
       var raw = null;
       try { raw = storage.getItem(META_KEY); } catch (e) { return; }
-      if (raw != null) return;
+      if (raw != null) {
+        var parsed = null;
+        try { parsed = JSON.parse(raw); } catch (e) { parsed = null; }
+        if (isValidRecord(parsed)) {
+          SAVE = defaultSave();
+          applyNumbers(parsed.stats);
+          return;
+        }
+      }
       if (typeof globalThis.metaUpdate !== 'function') return;
-      globalThis.metaUpdate(SLUG, metaVersion, { stats: statsSnapshot(), logros: unlockedIds(SAVE) });
+      writeMeta();
       metaLastWrite = Date.now();
+    } catch (e) {}
+  }
+
+  function setProgressSandbox(on) {
+    try {
+      sandbox = !!on;
+      if (sandbox) {
+        metaDirty = false;
+        if (metaTimer != null) {
+          try { clearTimeout(metaTimer); } catch (e) {}
+          metaTimer = null;
+        }
+      }
     } catch (e) {}
   }
 
@@ -235,11 +265,13 @@
     SLUG: SLUG,
     SAVE_KEY: SAVE_KEY,
     META_KEY: META_KEY,
-    STAT_KEYS: STAT_KEYS,
+    CORRUPT_KEY: CORRUPT_KEY,
+    STATS: STATS,
     LOGROS: LOGROS,
     loadProgress: loadProgress,
     bumpProgress: bumpProgress,
     backfillMeta: backfillMeta,
-    flushProgressNow: flushProgressNow
+    flushProgressNow: flushProgressNow,
+    setProgressSandbox: setProgressSandbox
   };
 });

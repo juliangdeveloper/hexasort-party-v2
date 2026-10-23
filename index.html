@@ -432,7 +432,7 @@ const ADJ = [
 
 const THRESHOLD = 10;
 const CASCADE_STEP_MS = 1600; // pausa visible por eslabón de cascada
-const GAME_VERSION='v1.4.0';
+const GAME_VERSION='1.4.1';
 
 // ===================== GAME STATE =====================
 let G = {
@@ -460,6 +460,7 @@ function getDur(){return parseInt(document.querySelector('input[name=rnd]:checke
 
 // ===================== START =====================
 function startG(tut=false){
+  if(typeof setProgressSandbox==='function')setProgressSandbox(false);
   const n=getPC();
   G.players=[];G.over=false;G.animating=false;
   for(let i=0;i<n;i++){
@@ -1346,6 +1347,7 @@ const TUT=[
   {t:'¡Vamos a jugar! Selecciona una pila del pool.'}
 ];
 function startTut(){
+  if(typeof setProgressSandbox==='function')setProgressSandbox(true);
   G.players=[
     {name:'Tú',type:'human',color:PCOL[0],score:0},
     {name:'IA Demo',type:'easy',color:PCOL[1],score:0}
@@ -1362,10 +1364,10 @@ function showTut(){
   btn.textContent=tutS===TUT.length-1?'¡Jugar!':'Siguiente';
   bg.classList.add('show');box.classList.add('show');
 }
-function tutNext(){tutS++;if(tutS>=TUT.length){document.getElementById('tutBg').classList.remove('show');document.getElementById('tutBox').classList.remove('show');note({tutorials_finished:1});startG()}else showTut()}
+function tutNext(){tutS++;if(tutS>=TUT.length){document.getElementById('tutBg').classList.remove('show');document.getElementById('tutBox').classList.remove('show');if(typeof setProgressSandbox==='function')setProgressSandbox(false);note({tutorials_finished:1});startG()}else showTut()}
 
 // ===================== UI =====================
-function setVersion(){document.querySelectorAll('.verNum').forEach(e=>e.textContent=GAME_VERSION.replace('v',''))}
+function setVersion(){document.querySelectorAll('.verNum').forEach(e=>e.textContent=String(GAME_VERSION).replace(/^v/i,''))}
 function showS(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');setVersion()}
 function setMsg(m){document.getElementById('msg').textContent=m}
 function showRules(){document.getElementById('rulesM').classList.add('show')}

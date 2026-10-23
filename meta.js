@@ -5,44 +5,84 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   var MAX_STATS = 20;
 
-  function finiteStats(obj) {
-    var out = {};
-    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return out;
-    var keys = Object.keys(obj);
-    for (var i = 0; i < keys.length; i++) {
-      if (Object.keys(out).length >= MAX_STATS) break;
-      var k = keys[i];
-      var n = obj[k];
-      if (typeof n === 'number' && Number.isFinite(n)) out[k] = n;
+  function plainVersion(version) {
+    var s = typeof version === 'string' ? version : '';
+    if (s.charAt(0) === 'v' || s.charAt(0) === 'V') s = s.slice(1);
+    return s;
+  }
+
+  function inDemo() {
+    try {
+      var loc = globalThis.location;
+      var q = loc && typeof loc.search === 'string' ? loc.search : '';
+      if (!q) return false;
+      var body = q.charAt(0) === '?' ? q.slice(1) : q;
+      var parts = body.split('&');
+      for (var i = 0; i < parts.length; i++) {
+        var eq = parts[i].split('=');
+        var name = '';
+        var val = '';
+        try {
+          name = decodeURIComponent(eq[0] || '');
+          val = decodeURIComponent((eq[1] || '').replace(/\+/g, ' '));
+        } catch (e) { continue; }
+        if ((name === 'demo' || name === 'preview') && val === '1') return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  function isValidRecord(parsed, slug) {
+    return !!parsed && typeof parsed === 'object' && !Array.isArray(parsed) && parsed.v === 1 && parsed.slug === slug;
+  }
+
+  function declaredKeys(patch) {
+    var list = patch && Array.isArray(patch.declared) ? patch.declared : [];
+    var seen = Object.create(null);
+    var out = [];
+    for (var i = 0; i < list.length && out.length < MAX_STATS; i++) {
+      var item = list[i];
+      var key = item && typeof item.key === 'string' ? item.key : '';
+      if (!key || seen[key]) continue;
+      seen[key] = 1;
+      out.push({ key: key, monotonic: !!(item && item.monotonic) });
     }
     return out;
   }
 
   function metaUpdate(slug, version, patch) {
     try {
+      if (inDemo()) return;
       var storage = globalThis.localStorage;
       if (!storage) return;
       var key = 'meta.v1.' + slug;
       var prev = {};
-      try {
-        var raw = storage.getItem(key);
-        if (raw) prev = JSON.parse(raw);
-      } catch (e) {
-        prev = {};
+      var raw = null;
+      try { raw = storage.getItem(key); } catch (e) { raw = null; }
+      if (raw != null) {
+        var parsed = null;
+        try { parsed = JSON.parse(raw); } catch (e) { parsed = null; }
+        if (isValidRecord(parsed, slug)) prev = parsed;
+        else {
+          try { storage.setItem(key + '.corrupt', raw); } catch (e) {}
+          prev = {};
+        }
       }
-      if (!prev || typeof prev !== 'object' || Array.isArray(prev)) prev = {};
 
-      var stats = finiteStats(prev.stats);
-      var incoming = finiteStats(patch && patch.stats);
-      var incomingKeys = Object.keys(incoming);
-      for (var s = 0; s < incomingKeys.length; s++) {
-        stats[incomingKeys[s]] = incoming[incomingKeys[s]];
-      }
-      var statKeys = Object.keys(stats);
-      if (statKeys.length > MAX_STATS) {
-        var trimmed = {};
-        for (var t = 0; t < MAX_STATS; t++) trimmed[statKeys[t]] = stats[statKeys[t]];
-        stats = trimmed;
+      var prevStats = prev.stats && typeof prev.stats === 'object' && !Array.isArray(prev.stats) ? prev.stats : {};
+      var incoming = patch && patch.stats && typeof patch.stats === 'object' && !Array.isArray(patch.stats) ? patch.stats : {};
+      var decl = declaredKeys(patch);
+      var stats = {};
+      for (var i = 0; i < decl.length; i++) {
+        var item = decl[i];
+        var k = item.key;
+        var next = incoming[k];
+        var old = prevStats[k];
+        var hasNext = typeof next === 'number' && Number.isFinite(next);
+        var hasOld = typeof old === 'number' && Number.isFinite(old);
+        if (hasNext && hasOld && item.monotonic) stats[k] = Math.max(old, next);
+        else if (hasNext) stats[k] = next;
+        else if (hasOld) stats[k] = old;
       }
 
       var prevLogros = Array.isArray(prev.logros) ? prev.logros : [];
@@ -69,7 +109,7 @@
       var record = {
         v: 1,
         slug: slug,
-        version: version,
+        version: plainVersion(version),
         updatedAt: now,
         stats: stats,
         logros: ids,
