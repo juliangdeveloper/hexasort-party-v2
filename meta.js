@@ -2,13 +2,18 @@
   var api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
   root.metaUpdate = api.metaUpdate;
+  root.Meta = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   var MAX_STATS = 20;
 
+  var FASE = Object.freeze({ IDEA: 1, DEFINICION: 2, DISENO: 3, CONSTRUCCION: 4, VALIDACION: 5, LANZAMIENTO_Y_MANTENIMIENTO: 6, DESCARTADA: 7 });
+  var ESTADO_FASE = Object.freeze({ PENDIENTE: 0, EN_CURSO: 1, BLOQUEADA: 2, EN_REVISION: 3, COMPLETADA: 4 });
+  var TIPO_STAT = Object.freeze({ TOTAL_ACUMULADO: 'total_acumulado', MEJOR_MARCA: 'mejor_marca', VALOR_ACTUAL: 'valor_actual' });
+
   var PROYECTO = {
     objetivo: 'Juego web público de fiesta por turnos de apilar hexágonos, en Pages.',
-    fase: 3,
-    fase_estado: 1,
+    fase: FASE.DISENO,
+    fase_estado: ESTADO_FASE.EN_CURSO,
     fases_completadas: 2
   };
 
@@ -18,12 +23,26 @@
     return typeof n === 'number' && Number.isInteger(n) && n >= lo && n <= hi;
   }
 
+  function enumValido(enumeracion, valor) {
+    return Object.values(enumeracion).indexOf(valor) !== -1;
+  }
+
+  function statConservaMaximo(tipo) {
+    return tipo === TIPO_STAT.TOTAL_ACUMULADO || tipo === TIPO_STAT.MEJOR_MARCA;
+  }
+
+  function statsDeclarados(stats) {
+    if (Array.isArray(stats)) return stats;
+    if (!stats || typeof stats !== 'object') return [];
+    return Object.keys(stats).map(function (key) { return { key: key, tipo: stats[key] && stats[key].tipo }; });
+  }
+
   function metaProyecto(p) {
     try {
       if (!p || typeof p !== 'object' || Array.isArray(p)) return null;
       var o = p.objetivo;
       if (typeof o !== 'string' || !o.trim() || Array.from(o).length > 140) return null;
-      if (!proyectoInt(p.fase, 1, 7) || !proyectoInt(p.fase_estado, 0, 4) || !proyectoInt(p.fases_completadas, 0, 6)) return null;
+      if (!enumValido(FASE, p.fase) || !enumValido(ESTADO_FASE, p.fase_estado) || !proyectoInt(p.fases_completadas, 0, FASE.LANZAMIENTO_Y_MANTENIMIENTO)) return null;
       return { objetivo: o, fase: p.fase, fase_estado: p.fase_estado, fases_completadas: p.fases_completadas };
     } catch (e) {
       return null;
@@ -72,7 +91,7 @@
   }
 
   function declaredKeys(patch) {
-    var list = patch && Array.isArray(patch.declared) ? patch.declared : [];
+    var list = statsDeclarados(patch && patch.declared);
     var seen = Object.create(null);
     var out = [];
     for (var i = 0; i < list.length && out.length < MAX_STATS; i++) {
@@ -80,7 +99,7 @@
       var key = item && typeof item.key === 'string' ? item.key : '';
       if (!key || seen[key]) continue;
       seen[key] = 1;
-      out.push({ key: key, monotonic: !!(item && item.monotonic) });
+      out.push({ key: key, tipo: item.tipo });
     }
     return out;
   }
@@ -115,7 +134,7 @@
         var old = prevStats[k];
         var hasNext = typeof next === 'number' && Number.isFinite(next);
         var hasOld = typeof old === 'number' && Number.isFinite(old);
-        if (hasNext && hasOld && item.monotonic) stats[k] = Math.max(old, next);
+        if (hasNext && hasOld && statConservaMaximo(item.tipo)) stats[k] = Math.max(old, next);
         else if (hasNext) stats[k] = next;
         else if (hasOld) stats[k] = old;
       }
@@ -165,6 +184,12 @@
     metaUpdate: metaUpdate,
     metaProyecto: metaProyecto,
     metaSetProyecto: metaSetProyecto,
-    PROYECTO: PROYECTO
+    PROYECTO: PROYECTO,
+    FASE: FASE,
+    ESTADO_FASE: ESTADO_FASE,
+    TIPO_STAT: TIPO_STAT,
+    enumValido: enumValido,
+    statConservaMaximo: statConservaMaximo,
+    statsDeclarados: statsDeclarados
   };
 });

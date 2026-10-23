@@ -14,7 +14,7 @@ const {
   setProgressSandbox
 } = require('../progress.js');
 
-const VERSION = '1.4.5';
+const VERSION = '1.4.6';
 
 function mockStorage(seed) {
   const map = new Map();
@@ -85,7 +85,7 @@ test('old save without meta.v1 builds the record once', () => {
   assert.equal(rec.slug, 'hexasort-party-v2');
   assert.equal(rec.version, VERSION);
   assert.equal(rec.updatedAt, '2026-10-23T18:00:00.000Z');
-  assert.deepEqual(Object.keys(rec.stats), STATS.map(s => s.key));
+  assert.deepEqual(Object.keys(rec.stats), Object.keys(STATS));
   assert.equal(rec.stats.games_finished, 2);
   assert.equal(rec.stats.rounds_played, 20);
   assert.equal(rec.stats.placements, 30);
@@ -208,14 +208,14 @@ test('metaUpdate keeps hitos, unions logros, and posts to the parent', () => {
     })
   });
   const declared = [
-    { key: 'games_finished', monotonic: true },
-    { key: 'best_score', monotonic: true },
-    { key: 'shares', monotonic: true },
-    { key: 'rounds_played', monotonic: false }
+    { key: 'games_finished', tipo: 'total_acumulado' },
+    { key: 'best_score', tipo: 'total_acumulado' },
+    { key: 'shares', tipo: 'total_acumulado' },
+    { key: 'rounds_played', tipo: 'valor_actual' }
   ];
   try {
     withNow('2026-10-23T18:00:00.000Z', () => {
-      metaUpdate('hexasort-party-v2', 'v1.4.5', {
+      metaUpdate('hexasort-party-v2', 'v1.4.6', {
         stats: { games_finished: 2, best_score: NaN, rounds_played: 3, label: 'no', inf: Infinity },
         logros: ['score_100', 'first_game', 'score_100'],
         declared
@@ -252,7 +252,7 @@ test('declared stats are capped at 20 and undeclared keys are dropped', () => {
   const stats = { extra_count: 9 };
   for (let i = 0; i < 25; i++) {
     const key = 's_' + String(i).padStart(2, '0');
-    declared.push({ key, monotonic: i % 2 === 0 });
+    declared.push({ key, tipo: i % 2 === 0 ? 'total_acumulado' : 'valor_actual' });
     stats[key] = i;
   }
   mockStorage({
@@ -294,10 +294,10 @@ test('monotonic stats keep the greater value', () => {
     stats: { games_finished: 3, best_score: 50, placements: NaN, rounds_played: 2, extra_count: 8 },
     logros: [],
     declared: [
-      { key: 'games_finished', monotonic: true },
-      { key: 'best_score', monotonic: true },
-      { key: 'placements', monotonic: true },
-      { key: 'rounds_played', monotonic: false }
+      { key: 'games_finished', tipo: 'total_acumulado' },
+      { key: 'best_score', tipo: 'total_acumulado' },
+      { key: 'placements', tipo: 'total_acumulado' },
+      { key: 'rounds_played', tipo: 'valor_actual' }
     ]
   });
   const rec = JSON.parse(localStorage.getItem(META_KEY));
@@ -514,7 +514,7 @@ test('top window does not postMessage', () => {
     metaUpdate('hexasort-party-v2', VERSION, {
       stats: { games_finished: 1 },
       logros: [],
-      declared: [{ key: 'games_finished', monotonic: true }]
+      declared: [{ key: 'games_finished', tipo: 'total_acumulado' }]
     });
     assert.equal(messages.length, 0);
     assert.equal(JSON.parse(localStorage.getItem(META_KEY)).version, VERSION);

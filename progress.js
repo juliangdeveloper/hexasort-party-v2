@@ -1,35 +1,38 @@
 (function (root, factory) {
-  var api = factory();
+  var api = factory(typeof module === 'object' && module.exports ? require('./meta.js') : root.Meta);
   if (typeof module === 'object' && module.exports) module.exports = api;
   var names = Object.keys(api);
   for (var i = 0; i < names.length; i++) root[names[i]] = api[names[i]];
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (Meta) {
   var SLUG = 'hexasort-party-v2';
   var SAVE_KEY = 'hexasort-party-v2.save';
   var META_KEY = 'meta.v1.hexasort-party-v2';
   var CORRUPT_KEY = 'meta.v1.hexasort-party-v2.corrupt';
   var META_DEBOUNCE_MS = 1000;
 
-  var STATS = [
-    { key: 'games_finished', monotonic: true },
-    { key: 'rounds_played', monotonic: true },
-    { key: 'placements', monotonic: true },
-    { key: 'merges', monotonic: true },
-    { key: 'clears', monotonic: true },
-    { key: 'hexes_cleared', monotonic: true },
-    { key: 'points_scored', monotonic: true },
-    { key: 'best_score', monotonic: true },
-    { key: 'best_cascade', monotonic: true },
-    { key: 'board_locks', monotonic: true },
-    { key: 'tutorials_finished', monotonic: true },
-    { key: 'human_wins', monotonic: true },
-    { key: 'four_player_games', monotonic: true },
-    { key: 'long_games', monotonic: true },
-    { key: 'hard_ai_games', monotonic: true },
-    { key: 'ai_games', monotonic: true },
-    { key: 'shares', monotonic: true },
-    { key: 'max_players', monotonic: true }
-  ];
+  var TIPO_STAT = Meta.TIPO_STAT;
+
+  var STATS = Object.freeze({
+    games_finished: { tipo: TIPO_STAT.TOTAL_ACUMULADO, unidad: 'partidas terminadas' },
+    rounds_played: { tipo: TIPO_STAT.TOTAL_ACUMULADO, unidad: 'rondas jugadas' },
+    placements: { tipo: TIPO_STAT.TOTAL_ACUMULADO, unidad: 'pilas colocadas en el tablero' },
+    merges: { tipo: TIPO_STAT.TOTAL_ACUMULADO, unidad: 'fusiones de pilas' },
+    clears: { tipo: TIPO_STAT.TOTAL_ACUMULADO, unidad: 'pilas completadas y retiradas' },
+    hexes_cleared: { tipo: TIPO_STAT.TOTAL_ACUMULADO, unidad: 'hexágonos retirados' },
+    points_scored: { tipo: TIPO_STAT.TOTAL_ACUMULADO, unidad: 'puntos' },
+    best_score: { tipo: TIPO_STAT.MEJOR_MARCA, unidad: 'puntos en una partida' },
+    best_cascade: { tipo: TIPO_STAT.MEJOR_MARCA, unidad: 'retiros encadenados en una jugada' },
+    board_locks: { tipo: TIPO_STAT.TOTAL_ACUMULADO, unidad: 'tableros bloqueados sin espacio' },
+    tutorials_finished: { tipo: TIPO_STAT.TOTAL_ACUMULADO, unidad: 'tutoriales terminados' },
+    human_wins: { tipo: TIPO_STAT.TOTAL_ACUMULADO, unidad: 'partidas ganadas por un humano' },
+    four_player_games: { tipo: TIPO_STAT.TOTAL_ACUMULADO, unidad: 'partidas de 4 jugadores' },
+    long_games: { tipo: TIPO_STAT.TOTAL_ACUMULADO, unidad: 'partidas largas' },
+    hard_ai_games: { tipo: TIPO_STAT.TOTAL_ACUMULADO, unidad: 'partidas contra IA difícil' },
+    ai_games: { tipo: TIPO_STAT.TOTAL_ACUMULADO, unidad: 'partidas con IA' },
+    shares: { tipo: TIPO_STAT.TOTAL_ACUMULADO, unidad: 'veces compartido' },
+    max_players: { tipo: TIPO_STAT.MEJOR_MARCA, unidad: 'jugadores en una partida' }
+  });
+  var STAT_KEYS = Object.keys(STATS);
 
   var LOGROS = [
     { id: 'first_game', when: function (s) { return (s.games_finished || 0) >= 1; } },
@@ -86,8 +89,8 @@
 
   function defaultSave() {
     var s = {};
-    var n = Math.min(20, STATS.length);
-    for (var i = 0; i < n; i++) s[STATS[i].key] = 0;
+    var n = Math.min(20, STAT_KEYS.length);
+    for (var i = 0; i < n; i++) s[STAT_KEYS[i]] = 0;
     return s;
   }
 
@@ -97,12 +100,12 @@
 
   function applyNumbers(obj) {
     if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return;
-    var n = Math.min(20, STATS.length);
+    var n = Math.min(20, STAT_KEYS.length);
     for (var i = 0; i < n; i++) {
-      var key = STATS[i].key;
+      var key = STAT_KEYS[i];
       var v = obj[key];
       if (typeof v !== 'number' || !Number.isFinite(v)) continue;
-      if (STATS[i].monotonic) SAVE[key] = Math.max(SAVE[key], v);
+      if (Meta.statConservaMaximo(STATS[key].tipo)) SAVE[key] = Math.max(SAVE[key], v);
       else SAVE[key] = v;
     }
   }
@@ -140,9 +143,9 @@
 
   function statsSnapshot() {
     var stats = {};
-    var n = Math.min(20, STATS.length);
+    var n = Math.min(20, STAT_KEYS.length);
     for (var i = 0; i < n; i++) {
-      var key = STATS[i].key;
+      var key = STAT_KEYS[i];
       var v = SAVE[key];
       if (typeof v === 'number' && Number.isFinite(v)) stats[key] = v;
     }
@@ -226,13 +229,13 @@
     try {
       if (blocked() || !partial || typeof partial !== 'object') return;
       var changed = false;
-      var n = Math.min(20, STATS.length);
+      var n = Math.min(20, STAT_KEYS.length);
       for (var i = 0; i < n; i++) {
-        var key = STATS[i].key;
+        var key = STAT_KEYS[i];
         if (!Object.prototype.hasOwnProperty.call(partial, key)) continue;
         var v = partial[key];
         if (typeof v !== 'number' || !Number.isFinite(v)) continue;
-        if (STATS[i].monotonic && (key === 'best_score' || key === 'best_cascade' || key === 'max_players')) SAVE[key] = Math.max(SAVE[key], v);
+        if (STATS[key].tipo === TIPO_STAT.MEJOR_MARCA) SAVE[key] = Math.max(SAVE[key], v);
         else SAVE[key] += v;
         changed = true;
       }
