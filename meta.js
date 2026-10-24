@@ -15,7 +15,8 @@
     objetivo: 'Juego web público de fiesta por turnos de apilar hexágonos, en Pages.',
     fase: FASE.DISENO,
     fase_estado: ESTADO_FASE.EN_CURSO,
-    fases_completadas: 2
+    fases_completadas: 2,
+    tipo: TIPO_PROYECTO.PROYECTO
   };
 
   var proyectoSource = PROYECTO;
