@@ -15,7 +15,7 @@
 - Gana el mayor puntaje tras 5, 10 o 15 rondas. Incluye tutorial y botón para compartir el resultado.
 
 ## Stack
-Un solo `index.html` con HTML, CSS y JavaScript vanilla. Sin dependencias ni servidor.
+`index.html` con HTML, CSS y JavaScript vanilla, más `meta.js` y `progress.js` para el progreso guardado en el navegador. Sin dependencias ni servidor.
 
 ## Otros juegos de fiesta
 - 🌊 [Flood-It Party](https://github.com/juliangdeveloper/floodit-party) · [jugar](https://juliangdeveloper.github.io/floodit-party/)
