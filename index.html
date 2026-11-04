@@ -367,8 +367,8 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
 <div class="tut-box" id="tutBox"><p id="tutTx"></p><button class="btn btn-p btn-sm" id="tutBtn" onclick="tutNext()">Siguiente</button></div>
 
 
-<script src="meta.js?v=1.4.9"></script>
-<script src="progress.js?v=1.4.9"></script>
+<script src="meta.js?v=1.4.10"></script>
+<script src="progress.js?v=1.4.10"></script>
 <script>
 const COLORS = {
   red:{c:'#FF2A6D',n:'Rojo'}, blue:{c:'#00E5FF',n:'Azul'}, green:{c:'#00F5A0',n:'Verde'},
@@ -402,7 +402,7 @@ const ADJ = [
 
 const THRESHOLD = 10;
 const CASCADE_STEP_MS = 1600;
-const GAME_VERSION='1.4.9';
+const GAME_VERSION='1.4.10';
 
 let G = {
   players:[], round:0, maxRounds:10, curP:0, phase:'idle',
@@ -1249,7 +1249,7 @@ function startTut(){
   if(typeof setProgressSandbox==='function')setProgressSandbox(true);
   G.players=[
     {name:'Tú',type:'human',color:PCOL[0],score:0},
-    {name:'IA Demo',type:'easy',color:PCOL[1],score:0}
+    {name:'IA',type:'easy',color:PCOL[1],score:0}
   ];
   G.maxRounds=3;G.round=0;G.rotationOffset=0;G.over=false;G.animating=false;
   resetBoard();generatePool();G.round=1;
@@ -1283,6 +1283,7 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
 loadProgress();
 backfillMeta(GAME_VERSION);
+if(window.Meta&&typeof Meta.metaDeclararProyecto==='function')Meta.metaDeclararProyecto('hexasort-party-v2',GAME_VERSION);
 renderPS(2);
 setVersion();
 </script>

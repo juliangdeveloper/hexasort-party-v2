@@ -16,6 +16,7 @@
 
 ## Stack
 `index.html` con HTML, CSS y JavaScript vanilla, más `meta.js` y `progress.js` para el progreso guardado en el navegador. Sin dependencias ni servidor.
+Al abrirse guarda el progreso en `localStorage` (`meta.v1.hexasort-party-v2`), que lee el [portafolio](https://juliangdeveloper.github.io/).
 
 ## Otros juegos de fiesta
 - 🌊 [Flood-It Party](https://github.com/juliangdeveloper/floodit-party) · [jugar](https://juliangdeveloper.github.io/floodit-party/)
