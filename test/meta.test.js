@@ -14,7 +14,7 @@ const {
   setProgressSandbox
 } = require('../progress.js');
 
-const VERSION = '1.4.9';
+const VERSION = '1.4.10';
 
 function mockStorage(seed) {
   const map = new Map();
@@ -215,7 +215,7 @@ test('metaUpdate keeps hitos, unions logros, and posts to the parent', () => {
   ];
   try {
     withNow('2026-10-23T18:00:00.000Z', () => {
-      metaUpdate('hexasort-party-v2', 'v1.4.9', {
+      metaUpdate('hexasort-party-v2', 'v1.4.10', {
         stats: { games_finished: 2, best_score: NaN, rounds_played: 3, label: 'no', inf: Infinity },
         logros: ['score_100', 'first_game', 'score_100'],
         declared
@@ -417,39 +417,6 @@ test('pagehide and hidden visibility flush a pending change immediately', () => 
     delete global.window;
     global.location = { search: '', origin: 'https://juliangdeveloper.github.io' };
   }
-});
-
-test('demo and preview modes do not write or postMessage', () => {
-  const messages = [];
-  global.window = {
-    parent: { postMessage() { messages.push(1); } }
-  };
-  for (const search of ['?demo=1', '?x=2&preview=1', '?demo=1&y=3']) {
-    messages.length = 0;
-    global.location = { search, origin: 'https://juliangdeveloper.github.io' };
-    mockStorage({ [SAVE_KEY]: JSON.stringify({ games_finished: 6, best_score: 200 }) });
-    const writes = [];
-    const origSet = localStorage.setItem;
-    localStorage.setItem = function (k, v) {
-      writes.push(k);
-      return origSet.call(localStorage, k, v);
-    };
-    loadProgress();
-    backfillMeta(VERSION);
-    bumpProgress({ placements: 4, games_finished: 1 });
-    flushProgressNow();
-    metaUpdate('hexasort-party-v2', VERSION, {
-      stats: { games_finished: 6 },
-      logros: ['first_game'],
-      declared: STATS
-    });
-    assert.equal(localStorage.getItem(META_KEY), null);
-    assert.deepEqual(writes, []);
-    assert.equal(messages.length, 0);
-    assert.equal(localStorage.getItem(SAVE_KEY), JSON.stringify({ games_finished: 6, best_score: 200 }));
-  }
-  delete global.window;
-  global.location = { search: '', origin: 'https://juliangdeveloper.github.io' };
 });
 
 test('tutorial sandbox does not write fake progress', () => {

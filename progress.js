@@ -62,29 +62,8 @@
     return s;
   }
 
-  function inDemo() {
-    try {
-      var loc = globalThis.location;
-      var q = loc && typeof loc.search === 'string' ? loc.search : '';
-      if (!q) return false;
-      var body = q.charAt(0) === '?' ? q.slice(1) : q;
-      var parts = body.split('&');
-      for (var i = 0; i < parts.length; i++) {
-        var eq = parts[i].split('=');
-        var name = '';
-        var val = '';
-        try {
-          name = decodeURIComponent(eq[0] || '');
-          val = decodeURIComponent((eq[1] || '').replace(/\+/g, ' '));
-        } catch (e) { continue; }
-        if ((name === 'demo' || name === 'preview') && val === '1') return true;
-      }
-    } catch (e) {}
-    return false;
-  }
-
   function blocked() {
-    return sandbox || inDemo();
+    return sandbox;
   }
 
   function defaultSave() {
