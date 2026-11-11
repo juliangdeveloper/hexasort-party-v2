@@ -197,7 +197,6 @@ animation:burstSpin 1s ease-out forwards}
 
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center;padding:20px}
 .overlay.show{display:flex}
-.overlay-card{background:var(--panel);border-radius:20px;padding:24px;max-width:400px;width:100%;text-align:center;border:2px solid var(--accent)}
 
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;padding:20px}
 .modal-bg.show{display:flex}
@@ -245,7 +244,6 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
   #menu h1 .mt2{font-size:1.2em}
   .logo-hex{width:68px;height:58px}
   .ms h3{margin:-12px -12px 10px;padding:9px 12px;border-radius:12px 12px 0 0}
-  .turn-info{font-size:.72em}
   .round-badge{font-size:.85em;padding:4px 10px}
   .hex-cell{width:58px;height:50px;margin:0}
   .board-wrap{margin-top:16px}
@@ -367,8 +365,8 @@ animation:confettiFall var(--fall-dur,3s) ease-in forwards var(--fall-delay,0s)}
 <div class="tut-box" id="tutBox"><p id="tutTx"></p><button class="btn btn-p btn-sm" id="tutBtn" onclick="tutNext()">Siguiente</button></div>
 
 
-<script src="meta.js?v=1.4.10"></script>
-<script src="progress.js?v=1.4.10"></script>
+<script src="meta.js?v=1.4.11"></script>
+<script src="progress.js?v=1.4.11"></script>
 <script>
 const COLORS = {
   red:{c:'#FF2A6D',n:'Rojo'}, blue:{c:'#00E5FF',n:'Azul'}, green:{c:'#00F5A0',n:'Verde'},
@@ -402,7 +400,7 @@ const ADJ = [
 
 const THRESHOLD = 10;
 const CASCADE_STEP_MS = 1600;
-const GAME_VERSION='1.4.10';
+const GAME_VERSION='1.4.11';
 
 let G = {
   players:[], round:0, maxRounds:10, curP:0, phase:'idle',
