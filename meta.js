@@ -13,10 +13,10 @@
 
   var PROYECTO = {
     objetivo: 'Juego web público de fiesta por turnos de apilar hexágonos, en Pages.',
-    fase: FASE.DISENO,
-    fase_estado: ESTADO_FASE.EN_CURSO,
+    fase: FASE.DESCARTADA,
+    fase_estado: ESTADO_FASE.COMPLETADA,
     fases_completadas: 2,
-    tipo: TIPO_PROYECTO.ARCHIVO,
+    tipo: TIPO_PROYECTO.PROYECTO,
     aportes: [
       { stat: 'Programación', exp: 5, fuente: 'creacion' },
       { stat: 'Diseño', exp: 12, fuente: 'creacion' },

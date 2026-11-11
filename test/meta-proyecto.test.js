@@ -173,7 +173,7 @@ test('an old record without tipo gains a valid tipo on the next write and keeps 
   assert.strictEqual('proyecto' in JSON.parse(second.getItem(KEY)), false);
 });
 
-test('the written proyecto block carries tipo archivo', () => {
+test('the written proyecto block carries tipo proyecto', () => {
   const stale = { objetivo: 'Objetivo anterior.', fase: 2, fase_estado: 3, fases_completadas: 1 };
   const old = {
     v: 1, slug: 'hexasort-party-v2', version: '0.0.1', updatedAt: '2026-01-01T00:00:00.000Z',
@@ -183,8 +183,8 @@ test('the written proyecto block carries tipo archivo', () => {
   const storage = mem({ [KEY]: JSON.stringify(old) });
   update(storage, []);
   const rec = JSON.parse(storage.getItem(KEY));
-  assert.strictEqual(Meta.PROYECTO.tipo, Meta.TIPO_PROYECTO.ARCHIVO);
-  assert.strictEqual(rec.proyecto.tipo, 'archivo');
+  assert.strictEqual(Meta.PROYECTO.tipo, Meta.TIPO_PROYECTO.PROYECTO);
+  assert.strictEqual(rec.proyecto.tipo, 'proyecto');
   assert.deepStrictEqual(rec.proyecto, Object.assign({}, Meta.PROYECTO));
   assert.strictEqual(rec.hitos['first_game'], '2026-01-01T00:00:00.000Z');
   assert.strictEqual(storage.getItem(KEY + '.corrupt'), null);
