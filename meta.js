@@ -16,7 +16,7 @@
     fase: FASE.DISENO,
     fase_estado: ESTADO_FASE.EN_CURSO,
     fases_completadas: 2,
-    tipo: TIPO_PROYECTO.PROYECTO,
+    tipo: TIPO_PROYECTO.ARCHIVO,
     aportes: [
       { stat: 'Programación', exp: 5, fuente: 'creacion' },
       { stat: 'Diseño', exp: 12, fuente: 'creacion' },
